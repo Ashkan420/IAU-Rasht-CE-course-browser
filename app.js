@@ -1,5 +1,5 @@
 /**
- * Course Browser — Client-side filtering, sorting, search, and export
+ * Course Browser — Dynamic columns, نیمسال support, filtering, sorting, search, and export
  */
 (function () {
   'use strict';
@@ -11,22 +11,19 @@
   let activeFilters = []; // { field, value }
   let sortField = null;
   let sortDir = 'asc'; // 'asc' | 'desc'
+  let tableColumns = []; // dynamically from JSON keys
+  let semesters = [];
 
   // ── DOM refs ───────────────────────────────────────────────────
   const $ = (sel) => document.querySelector(sel);
   const $$ = (sel) => document.querySelectorAll(sel);
 
+  const tableHead = $('#courseTableHead');
   const tableBody = $('#courseTableBody');
   const resultsCount = $('#resultsCount');
   const activeFiltersEl = $('#activeFilters');
   const updateDateEl = $('#updateDate');
-
-  const searchInputs = {
-    'کد درس': $('#searchCode'),
-    'نام درس': $('#searchName'),
-    'کد ارائه': $('#searchOffer'),
-    'نام استاد': $('#searchInstructor'),
-  };
+  const semesterSelect = $('#semesterSelect');
 
   // ── Persian date helpers ───────────────────────────────────────
   function toJalali(gy, gm, gd) {
@@ -59,21 +56,91 @@
     return `${jd.jd} ${months[jd.jm - 1]} ${jd.jy}`;
   }
 
-  // ── Load data ──────────────────────────────────────────────────
-  async function loadData() {
+  // ── Load semesters ─────────────────────────────────────────────
+  async function loadSemesters() {
     try {
-      const [coursesRes, dateRes] = await Promise.all([
-        fetch('data/courses.json'),
-        fetch('data/lastUpdate.json'),
-      ]);
-      allCourses = await coursesRes.json();
-      const dateData = await dateRes.json();
-      updateDateEl.textContent = `آخرین به‌روزرسانی: ${formatJalaliDate(dateData.date)}`;
+      const res = await fetch('data/semesters.json');
+      semesters = await res.json();
     } catch (err) {
-      console.error('Failed to load data:', err);
-      allCourses = [];
+      console.error('Failed to load semesters:', err);
+      semesters = [];
     }
+
+    // Populate dropdown
+    semesterSelect.innerHTML = semesters.map((s) =>
+      `<option value="${s.id}">${s.id} — ${s.title}</option>`
+    ).join('');
+
+    // Select latest (first in list, already sorted desc)
+    if (semesters.length > 0) {
+      semesterSelect.value = semesters[0].id;
+    }
+  }
+
+  // ── Load courses for selected نیمسال ───────────────────────────
+  async function loadCourses(nemesterId) {
+    try {
+      const res = await fetch(`data/${nemesterId}/courses.json`);
+      const data = await res.json();
+
+      // New wrapper format
+      if (data.دروس && Array.isArray(data.دروس)) {
+        allCourses = data.دروس;
+
+        // Extract columns from first course
+        if (allCourses.length > 0) {
+          tableColumns = Object.keys(allCourses[0]);
+        }
+
+        // Update date
+        if (data['تاریخ به‌روزرسانی']) {
+          updateDateEl.textContent = `آخرین به‌روزرسانی: ${formatJalaliDate(data['تاریخ به‌روزرسانی'])}`;
+        }
+      } else {
+        // Legacy flat array format fallback
+        allCourses = data;
+        if (allCourses.length > 0) {
+          tableColumns = Object.keys(allCourses[0]);
+        }
+        updateDateEl.textContent = '';
+      }
+    } catch (err) {
+      console.error('Failed to load courses:', err);
+      allCourses = [];
+      tableColumns = [];
+    }
+
+    buildTableHeader();
     applyFilters();
+  }
+
+  // ── Build dynamic table header ─────────────────────────────────
+  function buildTableHeader() {
+    const tr = tableHead.querySelector('tr');
+    tr.innerHTML = '';
+    tableColumns.forEach((col) => {
+      const th = document.createElement('th');
+      th.dataset.sort = col;
+      th.textContent = col;
+      const arrow = document.createElement('span');
+      arrow.className = 'sort-arrow';
+      th.appendChild(arrow);
+
+      th.addEventListener('click', () => {
+        if (sortField === col) {
+          sortDir = sortDir === 'asc' ? 'desc' : 'asc';
+        } else {
+          sortField = col;
+          sortDir = 'asc';
+        }
+        $$('.table-wrapper th').forEach((t) => t.classList.remove('sort-asc', 'sort-desc'));
+        th.classList.add(sortDir === 'asc' ? 'sort-asc' : 'sort-desc');
+        applySort(true);
+        updateUrl();
+      });
+
+      tr.appendChild(th);
+    });
   }
 
   // ── Filtering ──────────────────────────────────────────────────
@@ -140,24 +207,23 @@
   // ── Render ─────────────────────────────────────────────────────
   function renderTable() {
     if (filteredCourses.length === 0) {
-      tableBody.innerHTML = '<tr><td colspan="9" class="empty-state">نتیجه‌ای یافت نشد</td></tr>';
+      tableBody.innerHTML = `<tr><td colspan="${tableColumns.length || 1}" class="empty-state">نتیجه‌ای یافت نشد</td></tr>`;
       return;
     }
 
     const rows = filteredCourses.map((c) => {
-      const cat = c['نوع واحد'];
-      const badgeClass = cat === 'عمومی' ? 'badge-general' : 'badge-specialized';
-      return `<tr>
-        <td>${esc(c['کد درس'])}</td>
-        <td>${esc(c['نام درس'])}</td>
-        <td><span class="badge ${badgeClass}">${esc(cat)}</span></td>
-        <td>${esc(c['کد ارائه'])}</td>
-        <td>${esc(c['نام استاد'])}</td>
-        <td>${esc(c['مقطع ارائه'])}</td>
-        <td>${esc(c['نوع ارائه'])}</td>
-        <td>${esc(c['حداکثر ظرفیت'])}</td>
-        <td>${esc(c['زمانبندی تشکیل کلاس'])}</td>
-      </tr>`;
+      const cells = tableColumns.map((col) => {
+        let val = c[col] || '';
+        // Badge for نوع واحد
+        if (col === 'نوع واحد') {
+          const badgeClass = val === 'عمومی' ? 'badge-general' : 'badge-specialized';
+          val = `<span class="badge ${badgeClass}">${esc(val)}</span>`;
+        } else {
+          val = esc(val);
+        }
+        return `<td>${val}</td>`;
+      }).join('');
+      return `<tr>${cells}</tr>`;
     });
 
     tableBody.innerHTML = rows.join('');
@@ -196,6 +262,8 @@
   // ── URL state ──────────────────────────────────────────────────
   function updateUrl() {
     const params = new URLSearchParams();
+    const sem = semesterSelect.value;
+    if (sem) params.set('sem', sem);
     if (currentCategory !== 'همه') params.set('cat', currentCategory);
     activeFilters.forEach((f) => params.append('f', `${f.field}:${f.value}`));
     if (sortField) {
@@ -210,6 +278,12 @@
     const hash = window.location.hash.slice(1);
     if (!hash) return;
     const params = new URLSearchParams(hash);
+
+    // Semester
+    const sem = params.get('sem');
+    if (sem) {
+      semesterSelect.value = sem;
+    }
 
     // Category
     const cat = params.get('cat');
@@ -238,8 +312,8 @@
 
   // ── Add filter from input ──────────────────────────────────────
   function addFilter(field) {
-    const input = searchInputs[field];
-    if (!input) return;
+    const input = $(`[data-field="${field}"]`);
+    if (!input || input.tagName !== 'INPUT') return;
     const val = input.value.trim();
     if (!val) return;
 
@@ -277,18 +351,8 @@
     doc.text(`${filteredCourses.length} results`, 40, 52);
     doc.setTextColor(0);
 
-    const head = [['Code', 'Name', 'Category', 'Offer', 'Instructor', 'Level', 'Delivery', 'Capacity', 'Schedule']];
-    const body = filteredCourses.map((c) => [
-      c['کد درس'] || '',
-      c['نام درس'] || '',
-      c['نوع واحد'] || '',
-      c['کد ارائه'] || '',
-      c['نام استاد'] || '',
-      c['مقطع ارائه'] || '',
-      c['نوع ارائه'] || '',
-      c['حداکثر ظرفیت'] || '',
-      c['زمانبندی تشکیل کلاس'] || '',
-    ]);
+    const head = [tableColumns];
+    const body = filteredCourses.map((c) => tableColumns.map((col) => c[col] || ''));
 
     doc.autoTable({
       head,
@@ -297,10 +361,6 @@
       styles: { fontSize: 7, cellPadding: 4, halign: 'center', overflow: 'linebreak' },
       headStyles: { fillColor: [30, 30, 30], textColor: [255, 255, 255], fontStyle: 'bold' },
       alternateRowStyles: { fillColor: [245, 245, 250] },
-      columnStyles: {
-        1: { halign: 'right', cellWidth: 120 },
-        4: { halign: 'right', cellWidth: 90 },
-      },
       margin: { top: 60 },
     });
 
@@ -311,16 +371,9 @@
   function exportXlsx() {
     if (!filteredCourses.length) return;
 
-    const headers = ['کد درس', 'نام درس', 'نوع واحد', 'کد ارائه', 'نام استاد', 'مقطع ارائه', 'نوع ارائه', 'حداکثر ظرفیت', 'زمانبندی تشکیل کلاس'];
-    const data = filteredCourses.map((c) => headers.map((h) => c[h] || ''));
-
-    const ws = XLSX.utils.aoa_to_sheet([headers, ...data]);
-
-    // Set column widths
-    ws['!cols'] = [
-      { wch: 12 }, { wch: 30 }, { wch: 10 }, { wch: 18 },
-      { wch: 20 }, { wch: 20 }, { wch: 15 }, { wch: 10 }, { wch: 30 },
-    ];
+    const data = filteredCourses.map((c) => tableColumns.map((col) => c[col] || ''));
+    const ws = XLSX.utils.aoa_to_sheet([tableColumns, ...data]);
+    ws['!cols'] = tableColumns.map(() => ({ wch: 20 }));
 
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, 'Courses');
@@ -328,10 +381,28 @@
   }
 
   // ── Event listeners ────────────────────────────────────────────
-  function init() {
-    // Restore URL state first, then load data
+  async function init() {
+    // Restore URL state first
     restoreFromUrl();
-    loadData();
+
+    // Load semesters, then courses
+    await loadSemesters();
+    const sem = semesterSelect.value;
+    if (sem) {
+      await loadCourses(sem);
+    }
+
+    // Semester dropdown
+    semesterSelect.addEventListener('change', () => {
+      sortField = null;
+      sortDir = 'asc';
+      activeFilters = [];
+      currentCategory = 'همه';
+      $$('.cat-btn').forEach((b) => b.classList.remove('active'));
+      $$('.cat-btn[data-cat="همه"]').forEach((b) => b.classList.add('active'));
+      $$('.btn-add').forEach((btn) => btn.classList.remove('visible'));
+      loadCourses(semesterSelect.value);
+    });
 
     // Category buttons
     $$('.cat-btn').forEach((btn) => {
@@ -344,7 +415,8 @@
     });
 
     // Search inputs — show + button on input, Enter to apply
-    Object.entries(searchInputs).forEach(([field, input]) => {
+    $$('.search-field input').forEach((input) => {
+      const field = input.dataset.field;
       input.addEventListener('input', () => {
         if (input.value.trim()) {
           showAddButton(field);
@@ -377,31 +449,6 @@
       applyFilters();
     });
 
-    // Column sorting
-    $$('.table-wrapper th[data-sort]').forEach((th) => {
-      const arrow = document.createElement('span');
-      arrow.className = 'sort-arrow';
-      th.appendChild(arrow);
-
-      th.addEventListener('click', () => {
-        const field = th.dataset.sort;
-        if (sortField === field) {
-          sortDir = sortDir === 'asc' ? 'desc' : 'asc';
-        } else {
-          sortField = field;
-          sortDir = 'asc';
-        }
-        // Update header classes
-        $$('.table-wrapper th').forEach((t) => {
-          t.classList.remove('sort-asc', 'sort-desc');
-        });
-        th.classList.add(sortDir === 'asc' ? 'sort-asc' : 'sort-desc');
-
-        applySort(true);
-        updateUrl();
-      });
-    });
-
     // Clear filters
     $('#btnClear').addEventListener('click', () => {
       currentCategory = 'همه';
@@ -412,7 +459,7 @@
       $$('.cat-btn').forEach((b) => b.classList.remove('active'));
       $$('.cat-btn[data-cat="همه"]').forEach((b) => b.classList.add('active'));
 
-      Object.values(searchInputs).forEach((input) => {
+      $$('.search-field input').forEach((input) => {
         input.value = '';
       });
       $$('.btn-add').forEach((btn) => btn.classList.remove('visible'));
@@ -430,8 +477,11 @@
       activeFilters = [];
       sortField = null;
       sortDir = 'asc';
+      currentCategory = 'همه';
+      $$('.cat-btn').forEach((b) => b.classList.remove('active'));
+      $$('.cat-btn[data-cat="همه"]').forEach((b) => b.classList.add('active'));
       restoreFromUrl();
-      applyFilters();
+      loadCourses(semesterSelect.value);
     });
 
     // Scroll to top button
