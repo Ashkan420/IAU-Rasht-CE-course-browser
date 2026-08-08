@@ -77,6 +77,11 @@ body {
   padding: 20px 28px;
 }
 
+.header.glass {
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
 .header-top {
   display: flex;
   align-items: center;
@@ -94,7 +99,11 @@ body {
 .header-actions {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
+}
+
+.header-actions .semester-select {
+  margin-left: 8px;
 }
 
 .update-date {
@@ -104,16 +113,17 @@ body {
 }
 
 .semester-select {
-  padding: 6px 12px;
+  padding: 8px 12px;
   border: 1px solid var(--glass-border);
   border-radius: var(--radius-sm);
   background: rgba(0, 0, 0, 0.3);
   color: var(--text-primary);
   font-family: inherit;
-  font-size: 0.82rem;
+  font-size: 0.85rem;
   cursor: pointer;
   outline: none;
   direction: rtl;
+  height: 34px;
 }
 
 .semester-select:focus {
@@ -236,6 +246,23 @@ body {
   background: var(--accent-dim);
   border-color: rgba(255, 255, 255, 0.15);
   color: var(--accent);
+}
+
+/* ========================================
+   Gender Filter
+   ======================================== */
+.gender-filter {
+  padding: 0 8px 8px;
+  display: flex;
+  gap: 6px;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+.gender-filter .cat-btn {
+  flex: 1;
+  padding: 8px 16px;
+  font-size: 0.82rem;
 }
 
 /* ========================================
@@ -472,6 +499,14 @@ body {
   background: rgba(255, 255, 255, 0.08);
   color: var(--accent);
   border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+/* Long text columns — truncate with ellipsis */
+.col-long {
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 /* Empty state */

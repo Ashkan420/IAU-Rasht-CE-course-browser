@@ -8,11 +8,18 @@
   let allCourses = [];
   let filteredCourses = [];
   let currentCategory = 'همه';
+  let currentGender = 'همه';
   let activeFilters = []; // { field, value }
   let sortField = null;
   let sortDir = 'asc'; // 'asc' | 'desc'
   let tableColumns = []; // dynamically from JSON keys
   let semesters = [];
+
+  // Columns that get truncated with ellipsis
+  const LONG_COLS = new Set([
+    'نام درس', 'نام استاد', 'زمانبندی تشکیل کلاس',
+    'نام کلاس درس', 'مکان برگزاری', 'نام گروه آموزشی'
+  ]);
 
   // ── DOM refs ───────────────────────────────────────────────────
   const $ = (sel) => document.querySelector(sel);
@@ -122,6 +129,7 @@
       const th = document.createElement('th');
       th.dataset.sort = col;
       th.textContent = col;
+      if (LONG_COLS.has(col)) th.classList.add('col-long');
       const arrow = document.createElement('span');
       arrow.className = 'sort-arrow';
       th.appendChild(arrow);
@@ -152,6 +160,21 @@
       result = result.filter((c) => c['نوع واحد'] === currentCategory);
     }
 
+    // Gender filter (only for همه/عمومی categories)
+    if (currentCategory !== 'تخصصی' && currentGender !== 'همه') {
+      result = result.filter((c) => {
+        const gender = (c['جنسیت'] || '').trim();
+        const className = (c['نام کلاس درس'] || '').trim();
+        if (currentGender === 'خواهران') {
+          return gender === 'زن' || className.includes('خواهران');
+        }
+        if (currentGender === 'برادران') {
+          return gender === 'مرد' || className.includes('برادران');
+        }
+        return true;
+      });
+    }
+
     // Search filters: OR within each field, AND across fields
     const grouped = {};
     for (const f of activeFilters) {
@@ -171,8 +194,20 @@
     updateCount();
     updateUrl();
 
+    // Show/hide gender filter based on category
+    const genderFilterEl = $('#genderFilter');
+    if (currentCategory === 'تخصصی') {
+      genderFilterEl.style.display = 'none';
+      currentGender = 'همه';
+      genderFilterEl.querySelectorAll('.cat-btn').forEach((b) => {
+        b.classList.toggle('active', b.dataset.gender === 'همه');
+      });
+    } else {
+      genderFilterEl.style.display = '';
+    }
+
     // Show clear button only when filters are active
-    const hasActiveFilters = activeFilters.length > 0 || currentCategory !== 'همه';
+    const hasActiveFilters = activeFilters.length > 0 || currentCategory !== 'همه' || currentGender !== 'همه';
     $('#btnClear').style.display = hasActiveFilters ? '' : 'none';
   }
 
@@ -214,6 +249,8 @@
     const rows = filteredCourses.map((c) => {
       const cells = tableColumns.map((col) => {
         let val = c[col] || '';
+        const cls = LONG_COLS.has(col) ? ' class="col-long"' : '';
+        const title = LONG_COLS.has(col) ? ` title="${esc(val)}"` : '';
         // Badge for نوع واحد
         if (col === 'نوع واحد') {
           const badgeClass = val === 'عمومی' ? 'badge-general' : 'badge-specialized';
@@ -221,7 +258,7 @@
         } else {
           val = esc(val);
         }
-        return `<td>${val}</td>`;
+        return `<td${cls}${title}>${val}</td>`;
       }).join('');
       return `<tr>${cells}</tr>`;
     });
@@ -265,6 +302,7 @@
     const sem = semesterSelect.value;
     if (sem) params.set('sem', sem);
     if (currentCategory !== 'همه') params.set('cat', currentCategory);
+    if (currentGender !== 'همه') params.set('gender', currentGender);
     activeFilters.forEach((f) => params.append('f', `${f.field}:${f.value}`));
     if (sortField) {
       params.set('sort', sortField);
@@ -289,9 +327,15 @@
     const cat = params.get('cat');
     if (cat && ['عمومی', 'تخصصی'].includes(cat)) {
       currentCategory = cat;
-      $$('.cat-btn').forEach((btn) => {
+      $$('.cat-btn[data-cat]').forEach((btn) => {
         btn.classList.toggle('active', btn.dataset.cat === cat);
       });
+    }
+
+    // Gender
+    const gender = params.get('gender');
+    if (gender && ['برادران', 'خواهران'].includes(gender)) {
+      currentGender = gender;
     }
 
     // Filters
@@ -405,10 +449,20 @@
     });
 
     // Category buttons
-    $$('.cat-btn').forEach((btn) => {
+    $$('.cat-btn[data-cat]').forEach((btn) => {
       btn.addEventListener('click', () => {
         currentCategory = btn.dataset.cat;
-        $$('.cat-btn').forEach((b) => b.classList.remove('active'));
+        $$('.cat-btn[data-cat]').forEach((b) => b.classList.remove('active'));
+        btn.classList.add('active');
+        applyFilters();
+      });
+    });
+
+    // Gender buttons
+    $$('.cat-btn[data-gender]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        currentGender = btn.dataset.gender;
+        $$('.cat-btn[data-gender]').forEach((b) => b.classList.remove('active'));
         btn.classList.add('active');
         applyFilters();
       });
@@ -452,12 +506,14 @@
     // Clear filters
     $('#btnClear').addEventListener('click', () => {
       currentCategory = 'همه';
+      currentGender = 'همه';
       activeFilters = [];
       sortField = null;
       sortDir = 'asc';
 
       $$('.cat-btn').forEach((b) => b.classList.remove('active'));
       $$('.cat-btn[data-cat="همه"]').forEach((b) => b.classList.add('active'));
+      $$('.cat-btn[data-gender="همه"]').forEach((b) => b.classList.add('active'));
 
       $$('.search-field input').forEach((input) => {
         input.value = '';
