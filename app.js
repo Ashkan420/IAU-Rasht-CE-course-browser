@@ -1,0 +1,431 @@
+/**
+ * Course Browser — Client-side filtering, sorting, search, and export
+ */
+(function () {
+  'use strict';
+
+  // ── State ──────────────────────────────────────────────────────
+  let allCourses = [];
+  let filteredCourses = [];
+  let currentCategory = 'همه';
+  let activeFilters = []; // { field, value }
+  let sortField = null;
+  let sortDir = 'asc'; // 'asc' | 'desc'
+
+  // ── DOM refs ───────────────────────────────────────────────────
+  const $ = (sel) => document.querySelector(sel);
+  const $$ = (sel) => document.querySelectorAll(sel);
+
+  const tableBody = $('#courseTableBody');
+  const resultsCount = $('#resultsCount');
+  const activeFiltersEl = $('#activeFilters');
+  const updateDateEl = $('#updateDate');
+
+  const searchInputs = {
+    'کد درس': $('#searchCode'),
+    'نام درس': $('#searchName'),
+    'کد ارائه': $('#searchOffer'),
+    'نام استاد': $('#searchInstructor'),
+  };
+
+  // ── Persian date helpers ───────────────────────────────────────
+  function toJalali(gy, gm, gd) {
+    const g_d_m = [0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334];
+    let gy2 = gy > 1600 ? 1597 : 979;
+    let gm2 = gm > 6 ? 1 : 0;
+    let gd2 = gd - 1 + (gm2 ? 30 : 0) + (gy > 1600 ? 79 : 22) + g_d_m[gm - 1];
+    let jy = 30 * (Math.floor(gd2 / 86596) + 1) + Math.floor(gd2 / 32770) * 29 + 80 + Math.floor(gd2 / 102980) - (Math.floor((gd2 - 2878) / 12490) * 32 - 3) / 4 + 1;
+    gd2 = Math.floor(gd2 % 12490 / 102980) * 31 + (gd2 % 102980);
+    let jm = 1 + Math.floor(gd2 / 980);
+    let jd = gd2 - Math.floor((jm - 1) * 980 / 32) + 1;
+    return { jy, jm, jd };
+  }
+
+  function formatJalaliDate(dateStr) {
+    const [y, m, d] = dateStr.split('-').map(Number);
+    const jd = toJalali(y, m, d);
+    const months = ['فروردین', 'اردیبهشت', 'خرداد', 'تیر', 'مرداد', 'شهریور', 'مهر', 'آبان', 'آذر', 'دی', 'بهمن', 'اسفند'];
+    return `${jd.jd} ${months[jd.jm - 1]} ${jd.jy}`;
+  }
+
+  // ── Load data ──────────────────────────────────────────────────
+  async function loadData() {
+    try {
+      const [coursesRes, dateRes] = await Promise.all([
+        fetch('data/courses.json'),
+        fetch('data/lastUpdate.json'),
+      ]);
+      allCourses = await coursesRes.json();
+      const dateData = await dateRes.json();
+      updateDateEl.textContent = `آخرین به‌روزرسانی: ${formatJalaliDate(dateData.date)}`;
+    } catch (err) {
+      console.error('Failed to load data:', err);
+      allCourses = [];
+    }
+    applyFilters();
+  }
+
+  // ── Filtering ──────────────────────────────────────────────────
+  function applyFilters() {
+    let result = allCourses;
+
+    // Category filter
+    if (currentCategory !== 'همه') {
+      result = result.filter((c) => c['نوع واحد'] === currentCategory);
+    }
+
+    // Search filters (AND-combined)
+    for (const f of activeFilters) {
+      result = result.filter((c) => matchField(c[f.field], f.value, f.field));
+    }
+
+    filteredCourses = result;
+    applySort(false);
+    renderTable();
+    renderChips();
+    updateCount();
+    updateUrl();
+  }
+
+  function matchField(cellValue, query, field) {
+    const cell = (cellValue || '').toString().trim();
+    const q = query.trim();
+    if (!q) return true;
+    // Partial match for text fields
+    if (field === 'نام درس' || field === 'نام استاد') {
+      return cell.includes(q);
+    }
+    // Exact match for code fields
+    return cell === q;
+  }
+
+  // ── Sorting ────────────────────────────────────────────────────
+  function applySort(rerender = true) {
+    if (!sortField) return;
+    filteredCourses.sort((a, b) => {
+      const va = (a[sortField] || '').toString();
+      const vb = (b[sortField] || '').toString();
+      const numA = parseFloat(va);
+      const numB = parseFloat(vb);
+      if (!isNaN(numA) && !isNaN(numB)) {
+        return sortDir === 'asc' ? numA - numB : numB - numA;
+      }
+      return sortDir === 'asc' ? va.localeCompare(vb, 'fa') : vb.localeCompare(va, 'fa');
+    });
+    if (rerender) renderTable();
+  }
+
+  // ── Render ─────────────────────────────────────────────────────
+  function renderTable() {
+    if (filteredCourses.length === 0) {
+      tableBody.innerHTML = '<tr><td colspan="9" class="empty-state">نتیجه‌ای یافت نشد</td></tr>';
+      return;
+    }
+
+    const rows = filteredCourses.map((c) => {
+      const cat = c['نوع واحد'];
+      const badgeClass = cat === 'عمومی' ? 'badge-general' : 'badge-specialized';
+      return `<tr>
+        <td>${esc(c['کد درس'])}</td>
+        <td>${esc(c['نام درس'])}</td>
+        <td><span class="badge ${badgeClass}">${esc(cat)}</span></td>
+        <td>${esc(c['کد ارائه'])}</td>
+        <td>${esc(c['نام استاد'])}</td>
+        <td>${esc(c['مقطع ارائه'])}</td>
+        <td>${esc(c['نوع ارائه'])}</td>
+        <td>${esc(c['حداکثر ظرفیت'])}</td>
+        <td>${esc(c['زمانبندی تشکیل کلاس'])}</td>
+      </tr>`;
+    });
+
+    tableBody.innerHTML = rows.join('');
+  }
+
+  function esc(str) {
+    const d = document.createElement('div');
+    d.textContent = (str || '').toString();
+    return d.innerHTML;
+  }
+
+  function updateCount() {
+    resultsCount.textContent = `${filteredCourses.length.toLocaleString('fa-IR')} نتیجه یافت شد`;
+  }
+
+  // ── Chips ──────────────────────────────────────────────────────
+  function renderChips() {
+    if (activeFilters.length === 0) {
+      activeFiltersEl.classList.remove('has-filters');
+      activeFiltersEl.innerHTML = '';
+      return;
+    }
+
+    activeFiltersEl.classList.add('has-filters');
+    activeFiltersEl.innerHTML = activeFilters
+      .map(
+        (f, i) =>
+          `<span class="filter-chip">
+            <span class="chip-label">${esc(f.field)}:</span> ${esc(f.value)}
+            <button class="chip-remove" data-index="${i}" title="حذف فیلتر">×</button>
+          </span>`
+      )
+      .join('');
+  }
+
+  // ── URL state ──────────────────────────────────────────────────
+  function updateUrl() {
+    const params = new URLSearchParams();
+    if (currentCategory !== 'همه') params.set('cat', currentCategory);
+    activeFilters.forEach((f) => params.append('f', `${f.field}:${f.value}`));
+    if (sortField) {
+      params.set('sort', sortField);
+      params.set('dir', sortDir);
+    }
+    const hash = params.toString();
+    history.replaceState(null, '', hash ? '#' + hash : window.location.pathname);
+  }
+
+  function restoreFromUrl() {
+    const hash = window.location.hash.slice(1);
+    if (!hash) return;
+    const params = new URLSearchParams(hash);
+
+    // Category
+    const cat = params.get('cat');
+    if (cat && ['عمومی', 'تخصصی'].includes(cat)) {
+      currentCategory = cat;
+      $$('.cat-btn').forEach((btn) => {
+        btn.classList.toggle('active', btn.dataset.cat === cat);
+      });
+    }
+
+    // Filters
+    const filterStrings = params.getAll('f');
+    activeFilters = filterStrings.map((s) => {
+      const [field, ...rest] = s.split(':');
+      return { field, value: rest.join(':') };
+    });
+
+    // Sort
+    const sf = params.get('sort');
+    const sd = params.get('dir');
+    if (sf && (sd === 'asc' || sd === 'desc')) {
+      sortField = sf;
+      sortDir = sd;
+    }
+  }
+
+  // ── Add filter from input ──────────────────────────────────────
+  function addFilter(field) {
+    const input = searchInputs[field];
+    if (!input) return;
+    const val = input.value.trim();
+    if (!val) return;
+
+    // Don't duplicate
+    const exists = activeFilters.some((f) => f.field === field && f.value === val);
+    if (!exists) {
+      activeFilters.push({ field, value: val });
+    }
+    input.value = '';
+    hideAddButton(field);
+    applyFilters();
+  }
+
+  function showAddButton(field) {
+    const btn = $(`.btn-add[data-field="${field}"]`);
+    if (btn) btn.classList.add('visible');
+  }
+
+  function hideAddButton(field) {
+    const btn = $(`.btn-add[data-field="${field}"]`);
+    if (btn) btn.classList.remove('visible');
+  }
+
+  // ── Export: PDF ────────────────────────────────────────────────
+  function exportPdf() {
+    if (!filteredCourses.length) return;
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({ orientation: 'l', unit: 'pt', format: 'a4' });
+
+    doc.setFont('helvetica');
+    doc.setFontSize(14);
+    doc.text('Course List', 40, 35);
+    doc.setFontSize(9);
+    doc.setTextColor(120);
+    doc.text(`${filteredCourses.length} results`, 40, 52);
+    doc.setTextColor(0);
+
+    const head = [['Code', 'Name', 'Category', 'Offer', 'Instructor', 'Level', 'Delivery', 'Capacity', 'Schedule']];
+    const body = filteredCourses.map((c) => [
+      c['کد درس'] || '',
+      c['نام درس'] || '',
+      c['نوع واحد'] || '',
+      c['کد ارائه'] || '',
+      c['نام استاد'] || '',
+      c['مقطع ارائه'] || '',
+      c['نوع ارائه'] || '',
+      c['حداکثر ظرفیت'] || '',
+      c['زمانبندی تشکیل کلاس'] || '',
+    ]);
+
+    doc.autoTable({
+      head,
+      body,
+      startY: 60,
+      styles: { fontSize: 7, cellPadding: 4, halign: 'center', overflow: 'linebreak' },
+      headStyles: { fillColor: [30, 41, 59], textColor: [255, 255, 255], fontStyle: 'bold' },
+      alternateRowStyles: { fillColor: [245, 245, 250] },
+      columnStyles: {
+        1: { halign: 'right', cellWidth: 120 },
+        4: { halign: 'right', cellWidth: 90 },
+      },
+      margin: { top: 60 },
+    });
+
+    doc.save('courses.pdf');
+  }
+
+  // ── Export: XLSX ───────────────────────────────────────────────
+  function exportXlsx() {
+    if (!filteredCourses.length) return;
+
+    const headers = ['کد درس', 'نام درس', 'نوع واحد', 'کد ارائه', 'نام استاد', 'مقطع ارائه', 'نوع ارائه', 'حداکثر ظرفیت', 'زمانبندی تشکیل کلاس'];
+    const data = filteredCourses.map((c) => headers.map((h) => c[h] || ''));
+
+    const ws = XLSX.utils.aoa_to_sheet([headers, ...data]);
+
+    // Set column widths
+    ws['!cols'] = [
+      { wch: 12 }, { wch: 30 }, { wch: 10 }, { wch: 18 },
+      { wch: 20 }, { wch: 20 }, { wch: 15 }, { wch: 10 }, { wch: 30 },
+    ];
+
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Courses');
+    XLSX.writeFile(wb, 'courses.xlsx');
+  }
+
+  // ── Event listeners ────────────────────────────────────────────
+  function init() {
+    // Restore URL state first, then load data
+    restoreFromUrl();
+    loadData();
+
+    // Category buttons
+    $$('.cat-btn').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        currentCategory = btn.dataset.cat;
+        $$('.cat-btn').forEach((b) => b.classList.remove('active'));
+        btn.classList.add('active');
+        applyFilters();
+      });
+    });
+
+    // Search inputs — show + button on input, Enter to apply
+    Object.entries(searchInputs).forEach(([field, input]) => {
+      input.addEventListener('input', () => {
+        if (input.value.trim()) {
+          showAddButton(field);
+        } else {
+          hideAddButton(field);
+        }
+      });
+
+      input.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          addFilter(field);
+        }
+      });
+    });
+
+    // + buttons
+    $$('.btn-add').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        addFilter(btn.dataset.field);
+      });
+    });
+
+    // Remove chip
+    activeFiltersEl.addEventListener('click', (e) => {
+      const chip = e.target.closest('.chip-remove');
+      if (!chip) return;
+      const index = parseInt(chip.dataset.index, 10);
+      activeFilters.splice(index, 1);
+      applyFilters();
+    });
+
+    // Column sorting
+    $$('.table-wrapper th[data-sort]').forEach((th) => {
+      const arrow = document.createElement('span');
+      arrow.className = 'sort-arrow';
+      th.appendChild(arrow);
+
+      th.addEventListener('click', () => {
+        const field = th.dataset.sort;
+        if (sortField === field) {
+          sortDir = sortDir === 'asc' ? 'desc' : 'asc';
+        } else {
+          sortField = field;
+          sortDir = 'asc';
+        }
+        // Update header classes
+        $$('.table-wrapper th').forEach((t) => {
+          t.classList.remove('sort-asc', 'sort-desc');
+        });
+        th.classList.add(sortDir === 'asc' ? 'sort-asc' : 'sort-desc');
+
+        applySort(true);
+        updateUrl();
+      });
+    });
+
+    // Clear filters
+    $('#btnClear').addEventListener('click', () => {
+      currentCategory = 'همه';
+      activeFilters = [];
+      sortField = null;
+      sortDir = 'asc';
+
+      $$('.cat-btn').forEach((b) => b.classList.remove('active'));
+      $$('.cat-btn[data-cat="همه"]').forEach((b) => b.classList.add('active'));
+
+      Object.values(searchInputs).forEach((input) => {
+        input.value = '';
+      });
+      $$('.btn-add').forEach((btn) => btn.classList.remove('visible'));
+      $$('.table-wrapper th').forEach((t) => t.classList.remove('sort-asc', 'sort-desc'));
+
+      applyFilters();
+    });
+
+    // Export buttons
+    $('#btnPdf').addEventListener('click', exportPdf);
+    $('#btnXlsx').addEventListener('click', exportXlsx);
+
+    // Hash change for back/forward navigation
+    window.addEventListener('hashchange', () => {
+      activeFilters = [];
+      sortField = null;
+      sortDir = 'asc';
+      restoreFromUrl();
+      applyFilters();
+    });
+
+    // Scroll to top button
+    const scrollTopBtn = $('#scrollTop');
+    window.addEventListener('scroll', () => {
+      scrollTopBtn.classList.toggle('visible', window.scrollY > 400);
+    });
+    scrollTopBtn.addEventListener('click', () => {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+  }
+
+  // Start
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+})();
