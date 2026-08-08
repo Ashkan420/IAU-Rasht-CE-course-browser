@@ -101,8 +101,9 @@
 
   // ── Load courses for selected نیمسال ───────────────────────────
   async function loadCourses(nemesterId) {
-    // Show loading state
-    tableBody.innerHTML = `<tr><td colspan="${tableColumns.length || 1}" class="loading-state">در حال بارگذاری...</td></tr>`;
+    // Show skeleton loading
+    const skeleton = $('#skeletonWrapper');
+    if (skeleton) skeleton.classList.add('visible');
 
     try {
       const res = await fetch(`data/${nemesterId}/courses.json`);
@@ -136,6 +137,9 @@
       tableColumns = [];
       showError('خطا در بارگذاری دروس. لطفاً اتصال اینترنت خود را بررسی کنید.');
     }
+
+    // Hide skeleton, show table
+    if (skeleton) skeleton.classList.remove('visible');
 
     buildTableHeader();
     applyFilters();
