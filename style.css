@@ -49,13 +49,17 @@
   --success: #555;
 }
 
-html.theme-transitioning {
-  clip-path: circle(var(--reveal-radius, 0%) at var(--reveal-x, 50%) var(--reveal-y, 50%));
-  transition: clip-path 0.6s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-html.theme-transitioning.theme-reveal {
-  clip-path: circle(150% at var(--reveal-x, 50%) var(--reveal-y, 50%));
+/* Smooth theme transition on key elements */
+body,
+.glass,
+.btn,
+.cat-btn,
+.input-group input,
+.semester-select,
+.theme-toggle,
+.table-wrapper th,
+.table-wrapper td {
+  transition: background-color 0.4s ease, color 0.4s ease, border-color 0.4s ease, box-shadow 0.4s ease;
 }
 
 html {
@@ -716,6 +720,14 @@ body {
 .skeleton-wrapper svg {
   display: block;
   width: 100%;
+  height: auto;
+  max-height: 420px;
+}
+
+@media (max-width: 600px) {
+  .skeleton-wrapper svg {
+    max-height: 280px;
+  }
 }
 
 /* ========================================
