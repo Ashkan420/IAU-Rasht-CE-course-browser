@@ -31,6 +31,19 @@
   const activeFiltersEl = $('#activeFilters');
   const updateDateEl = $('#updateDate');
   const semesterSelect = $('#semesterSelect');
+  const errorBanner = $('#errorBanner');
+  const errorBannerText = $('#errorBannerText');
+  const errorBannerClose = $('#errorBannerClose');
+
+  // ── Error banner helpers ─────────────────────────────────────────
+  function showError(message) {
+    errorBannerText.textContent = message;
+    errorBanner.classList.add('visible');
+  }
+
+  function hideError() {
+    errorBanner.classList.remove('visible');
+  }
 
   // ── Persian date helpers ───────────────────────────────────────
   function toJalali(gy, gm, gd) {
@@ -68,9 +81,11 @@
     try {
       const res = await fetch('data/semesters.json');
       semesters = await res.json();
+      hideError();
     } catch (err) {
       console.error('Failed to load semesters:', err);
       semesters = [];
+      showError('خطا در بارگذاری لیست نیمسال‌ها. لطفاً اتصال اینترنت خود را بررسی کنید.');
     }
 
     // Populate dropdown
@@ -86,9 +101,13 @@
 
   // ── Load courses for selected نیمسال ───────────────────────────
   async function loadCourses(nemesterId) {
+    // Show loading state
+    tableBody.innerHTML = `<tr><td colspan="${tableColumns.length || 1}" class="loading-state">در حال بارگذاری...</td></tr>`;
+
     try {
       const res = await fetch(`data/${nemesterId}/courses.json`);
       const data = await res.json();
+      hideError();
 
       // New wrapper format
       if (data.دروس && Array.isArray(data.دروس)) {
@@ -115,6 +134,7 @@
       console.error('Failed to load courses:', err);
       allCourses = [];
       tableColumns = [];
+      showError('خطا در بارگذاری دروس. لطفاً اتصال اینترنت خود را بررسی کنید.');
     }
 
     buildTableHeader();
@@ -129,10 +149,19 @@
       const th = document.createElement('th');
       th.dataset.sort = col;
       th.textContent = col;
+      th.setAttribute('tabindex', '0');
+      th.setAttribute('role', 'columnheader');
       if (LONG_COLS.has(col)) th.classList.add('col-long');
       const arrow = document.createElement('span');
       arrow.className = 'sort-arrow';
       th.appendChild(arrow);
+
+      th.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          th.click();
+        }
+      });
 
       th.addEventListener('click', () => {
         if (sortField === col) {
@@ -207,6 +236,7 @@
       currentGender = 'همه';
       genderFilterEl.querySelectorAll('.cat-btn').forEach((b) => {
         b.classList.toggle('active', b.dataset.gender === 'همه');
+        b.setAttribute('aria-pressed', b.dataset.gender === 'همه' ? 'true' : 'false');
       });
     } else {
       genderFilterEl.classList.add('visible');
@@ -256,7 +286,7 @@
       const cells = tableColumns.map((col) => {
         let val = c[col] || '';
         const cls = LONG_COLS.has(col) ? ' class="col-long"' : '';
-        const title = LONG_COLS.has(col) ? ` title="${esc(val)}"` : '';
+        const title = LONG_COLS.has(col) ? ` title="${escAttr(val)}"` : '';
         // Badge for نوع واحد
         if (col === 'نوع واحد') {
           const badgeClass = val === 'عمومی' ? 'badge-general' : 'badge-specialized';
@@ -276,6 +306,10 @@
     const d = document.createElement('div');
     d.textContent = (str || '').toString();
     return d.innerHTML;
+  }
+
+  function escAttr(str) {
+    return (str || '').toString().replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
   }
 
   function updateCount() {
@@ -319,6 +353,27 @@
   }
 
   function restoreFromUrl() {
+    // Reset to defaults first so stale state never leaks through
+    currentCategory = 'همه';
+    currentGender = 'همه';
+    activeFilters = [];
+    sortField = null;
+    sortDir = 'asc';
+
+    // Reset button active classes
+    $$('.cat-btn').forEach((b) => {
+      b.classList.remove('active');
+      b.setAttribute('aria-pressed', 'false');
+    });
+    $$('.cat-btn[data-cat="همه"]').forEach((b) => {
+      b.classList.add('active');
+      b.setAttribute('aria-pressed', 'true');
+    });
+    $$('.cat-btn[data-gender="همه"]').forEach((b) => {
+      b.classList.add('active');
+      b.setAttribute('aria-pressed', 'true');
+    });
+
     const hash = window.location.hash.slice(1);
     if (!hash) return;
     const params = new URLSearchParams(hash);
@@ -335,6 +390,7 @@
       currentCategory = cat;
       $$('.cat-btn[data-cat]').forEach((btn) => {
         btn.classList.toggle('active', btn.dataset.cat === cat);
+        btn.setAttribute('aria-pressed', btn.dataset.cat === cat ? 'true' : 'false');
       });
     }
 
@@ -342,6 +398,10 @@
     const gender = params.get('gender');
     if (gender && ['برادران', 'خواهران'].includes(gender)) {
       currentGender = gender;
+      $$('.cat-btn[data-gender]').forEach((btn) => {
+        btn.classList.toggle('active', btn.dataset.gender === gender);
+        btn.setAttribute('aria-pressed', btn.dataset.gender === gender ? 'true' : 'false');
+      });
     }
 
     // Filters
@@ -357,6 +417,12 @@
     if (sf && (sd === 'asc' || sd === 'desc')) {
       sortField = sf;
       sortDir = sd;
+      // Restore sort indicator on column header
+      $$('.table-wrapper th').forEach((t) => t.classList.remove('sort-asc', 'sort-desc'));
+      const activeTh = $(`.table-wrapper th[data-sort="${sortField}"]`);
+      if (activeTh) {
+        activeTh.classList.add(sortDir === 'asc' ? 'sort-asc' : 'sort-desc');
+      }
     }
   }
 
@@ -393,28 +459,32 @@
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF({ orientation: 'l', unit: 'pt', format: 'a4' });
 
-    doc.setFont('helvetica');
-    doc.setFontSize(14);
-    doc.text('Course List', 40, 35);
-    doc.setFontSize(9);
-    doc.setTextColor(120);
-    doc.text(`${filteredCourses.length} results`, 40, 52);
-    doc.setTextColor(0);
+    // Build an HTML table so the browser renders Vazirmatn (Persian) natively
+    const headerRow = tableColumns.map((col) => `<th style="padding:8px 12px;background:#1e1e1e;color:#fff;font-weight:bold;border:1px solid #333;font-size:9px;">${esc(col)}</th>`).join('');
+    const bodyRows = filteredCourses.map((c) => {
+      const cells = tableColumns.map((col) => `<td style="padding:6px 10px;border:1px solid #ddd;font-size:8px;">${esc(c[col] || '')}</td>`).join('');
+      return `<tr>${cells}</tr>`;
+    }).join('');
 
-    const head = [tableColumns];
-    const body = filteredCourses.map((c) => tableColumns.map((col) => c[col] || ''));
+    const html = `
+      <div dir="rtl" style="font-family:Vazirmatn,sans-serif;padding:20px;">
+        <h2 style="font-size:16px;margin-bottom:4px;">لیست دروس</h2>
+        <p style="font-size:10px;color:#888;margin-bottom:16px;">${filteredCourses.length.toLocaleString('fa-IR')} نتیجه</p>
+        <table style="width:100%;border-collapse:collapse;">
+          <thead><tr>${headerRow}</tr></thead>
+          <tbody>${bodyRows.join('')}</tbody>
+        </table>
+      </div>`;
 
-    doc.autoTable({
-      head,
-      body,
-      startY: 60,
-      styles: { fontSize: 7, cellPadding: 4, halign: 'center', overflow: 'linebreak' },
-      headStyles: { fillColor: [30, 30, 30], textColor: [255, 255, 255], fontStyle: 'bold' },
-      alternateRowStyles: { fillColor: [245, 245, 250] },
-      margin: { top: 60 },
+    doc.html(html, {
+      callback: function (doc) {
+        doc.save('courses.pdf');
+      },
+      x: 10,
+      y: 10,
+      width: 820,
+      windowWidth: 1100,
     });
-
-    doc.save('courses.pdf');
   }
 
   // ── Export: XLSX ───────────────────────────────────────────────
@@ -448,8 +518,14 @@
       sortDir = 'asc';
       activeFilters = [];
       currentCategory = 'همه';
-      $$('.cat-btn').forEach((b) => b.classList.remove('active'));
-      $$('.cat-btn[data-cat="همه"]').forEach((b) => b.classList.add('active'));
+      $$('.cat-btn').forEach((b) => {
+        b.classList.remove('active');
+        b.setAttribute('aria-pressed', 'false');
+      });
+      $$('.cat-btn[data-cat="همه"]').forEach((b) => {
+        b.classList.add('active');
+        b.setAttribute('aria-pressed', 'true');
+      });
       $$('.btn-add').forEach((btn) => btn.classList.remove('visible'));
       loadCourses(semesterSelect.value);
     });
@@ -458,8 +534,12 @@
     $$('.cat-btn[data-cat]').forEach((btn) => {
       btn.addEventListener('click', () => {
         currentCategory = btn.dataset.cat;
-        $$('.cat-btn[data-cat]').forEach((b) => b.classList.remove('active'));
+        $$('.cat-btn[data-cat]').forEach((b) => {
+          b.classList.remove('active');
+          b.setAttribute('aria-pressed', 'false');
+        });
         btn.classList.add('active');
+        btn.setAttribute('aria-pressed', 'true');
         applyFilters();
       });
     });
@@ -468,8 +548,12 @@
     $$('.cat-btn[data-gender]').forEach((btn) => {
       btn.addEventListener('click', () => {
         currentGender = btn.dataset.gender;
-        $$('.cat-btn[data-gender]').forEach((b) => b.classList.remove('active'));
+        $$('.cat-btn[data-gender]').forEach((b) => {
+          b.classList.remove('active');
+          b.setAttribute('aria-pressed', 'false');
+        });
         btn.classList.add('active');
+        btn.setAttribute('aria-pressed', 'true');
         applyFilters();
       });
     });
@@ -517,9 +601,18 @@
       sortField = null;
       sortDir = 'asc';
 
-      $$('.cat-btn').forEach((b) => b.classList.remove('active'));
-      $$('.cat-btn[data-cat="همه"]').forEach((b) => b.classList.add('active'));
-      $$('.cat-btn[data-gender="همه"]').forEach((b) => b.classList.add('active'));
+      $$('.cat-btn').forEach((b) => {
+        b.classList.remove('active');
+        b.setAttribute('aria-pressed', 'false');
+      });
+      $$('.cat-btn[data-cat="همه"]').forEach((b) => {
+        b.classList.add('active');
+        b.setAttribute('aria-pressed', 'true');
+      });
+      $$('.cat-btn[data-gender="همه"]').forEach((b) => {
+        b.classList.add('active');
+        b.setAttribute('aria-pressed', 'true');
+      });
 
       $$('.search-field input').forEach((input) => {
         input.value = '';
@@ -534,14 +627,11 @@
     $('#btnPdf').addEventListener('click', exportPdf);
     $('#btnXlsx').addEventListener('click', exportXlsx);
 
+    // Error banner close
+    errorBannerClose.addEventListener('click', hideError);
+
     // Hash change for back/forward navigation
     window.addEventListener('hashchange', () => {
-      activeFilters = [];
-      sortField = null;
-      sortDir = 'asc';
-      currentCategory = 'همه';
-      $$('.cat-btn').forEach((b) => b.classList.remove('active'));
-      $$('.cat-btn[data-cat="همه"]').forEach((b) => b.classList.add('active'));
       restoreFromUrl();
       loadCourses(semesterSelect.value);
     });

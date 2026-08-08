@@ -10,6 +10,7 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
+  <a href="#courseTable" class="skip-link">رفتن به جدول دروس</a>
   <div class="container">
     <!-- Header -->
     <header class="header glass">
@@ -32,12 +33,12 @@
 
     <!-- Category + Gender Filter (shared glass container) -->
     <div class="filter-bar glass" id="filterBar">
-      <div class="category-filter">
+      <div class="category-filter" role="group" aria-label="دسته‌بندی دروس">
         <button class="cat-btn" data-cat="عمومی">عمومی</button>
         <button class="cat-btn" data-cat="تخصصی">تخصصی</button>
         <button class="cat-btn active" data-cat="همه">همه</button>
       </div>
-      <div class="gender-filter" id="genderFilter">
+      <div class="gender-filter" id="genderFilter" role="group" aria-label="جنسیت">
         <button class="cat-btn" data-gender="خواهران">خواهران</button>
         <button class="cat-btn" data-gender="برادران">برادران</button>
         <button class="cat-btn active" data-gender="همه">همه</button>
@@ -85,6 +86,12 @@
     <div class="results-bar">
       <span class="results-count" id="resultsCount"></span>
       <button class="btn btn-clear" id="btnClear" style="display:none">پاک کردن فیلترها</button>
+    </div>
+
+    <!-- Error Banner -->
+    <div class="error-banner" id="errorBanner">
+      <span class="error-banner-text" id="errorBannerText"></span>
+      <button class="error-banner-close" id="errorBannerClose">&times;</button>
     </div>
 
     <!-- Table -->
