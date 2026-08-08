@@ -165,6 +165,12 @@
       result = result.filter((c) => {
         const gender = (c['جنسیت'] || '').trim();
         const className = (c['نام کلاس درس'] || '').trim();
+        const unitType = (c['نوع واحد'] || '').trim();
+
+        // Always include تخصصی courses (they have no gender assignment)
+        if (unitType === 'تخصصی') return true;
+
+        // For عمومی courses, match gender
         if (currentGender === 'خواهران') {
           return gender === 'زن' || className.includes('خواهران');
         }
@@ -197,13 +203,13 @@
     // Show/hide gender filter based on category
     const genderFilterEl = $('#genderFilter');
     if (currentCategory === 'تخصصی') {
-      genderFilterEl.style.display = 'none';
+      genderFilterEl.classList.remove('visible');
       currentGender = 'همه';
       genderFilterEl.querySelectorAll('.cat-btn').forEach((b) => {
         b.classList.toggle('active', b.dataset.gender === 'همه');
       });
     } else {
-      genderFilterEl.style.display = '';
+      genderFilterEl.classList.add('visible');
     }
 
     // Show clear button only when filters are active
