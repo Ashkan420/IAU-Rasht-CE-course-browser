@@ -31,13 +31,24 @@
   // ── Persian date helpers ───────────────────────────────────────
   function toJalali(gy, gm, gd) {
     const g_d_m = [0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334];
-    let gy2 = gy > 1600 ? 1597 : 979;
-    let gm2 = gm > 6 ? 1 : 0;
-    let gd2 = gd - 1 + (gm2 ? 30 : 0) + (gy > 1600 ? 79 : 22) + g_d_m[gm - 1];
-    let jy = 30 * (Math.floor(gd2 / 86596) + 1) + Math.floor(gd2 / 32770) * 29 + 80 + Math.floor(gd2 / 102980) - (Math.floor((gd2 - 2878) / 12490) * 32 - 3) / 4 + 1;
-    gd2 = Math.floor(gd2 % 12490 / 102980) * 31 + (gd2 % 102980);
-    let jm = 1 + Math.floor(gd2 / 980);
-    let jd = gd2 - Math.floor((jm - 1) * 980 / 32) + 1;
+    const gy2 = (gm > 2) ? (gy + 1) : gy;
+    const days = 355666 + (365 * gy) + Math.floor((gy + 3) / 4) - Math.floor((gy + 99) / 100) + Math.floor((gy + 399) / 400) + gd + g_d_m[gm - 1];
+    let jy = -1595 + (33 * Math.floor(days / 12053));
+    let daysLeft = days % 12053;
+    jy += 4 * Math.floor(daysLeft / 1461);
+    daysLeft = daysLeft % 1461;
+    if (daysLeft > 365) {
+      jy += Math.floor((daysLeft - 1) / 365);
+      daysLeft = (daysLeft - 1) % 365;
+    }
+    let jm, jd;
+    if (daysLeft < 186) {
+      jm = 1 + Math.floor(daysLeft / 31);
+      jd = 1 + (daysLeft % 31);
+    } else {
+      jm = 7 + Math.floor((daysLeft - 186) / 30);
+      jd = 1 + ((daysLeft - 186) % 30);
+    }
     return { jy, jm, jd };
   }
 
@@ -74,9 +85,16 @@
       result = result.filter((c) => c['نوع واحد'] === currentCategory);
     }
 
-    // Search filters (AND-combined)
+    // Search filters: OR within each field, AND across fields
+    const grouped = {};
     for (const f of activeFilters) {
-      result = result.filter((c) => matchField(c[f.field], f.value, f.field));
+      if (!grouped[f.field]) grouped[f.field] = [];
+      grouped[f.field].push(f.value);
+    }
+    for (const [field, values] of Object.entries(grouped)) {
+      result = result.filter((c) =>
+        values.some((v) => matchField(c[field], v, field))
+      );
     }
 
     filteredCourses = result;
@@ -85,6 +103,10 @@
     renderChips();
     updateCount();
     updateUrl();
+
+    // Show clear button only when filters are active
+    const hasActiveFilters = activeFilters.length > 0 || currentCategory !== 'همه';
+    $('#btnClear').style.display = hasActiveFilters ? '' : 'none';
   }
 
   function matchField(cellValue, query, field) {
@@ -273,7 +295,7 @@
       body,
       startY: 60,
       styles: { fontSize: 7, cellPadding: 4, halign: 'center', overflow: 'linebreak' },
-      headStyles: { fillColor: [30, 41, 59], textColor: [255, 255, 255], fontStyle: 'bold' },
+      headStyles: { fillColor: [30, 30, 30], textColor: [255, 255, 255], fontStyle: 'bold' },
       alternateRowStyles: { fillColor: [245, 245, 250] },
       columnStyles: {
         1: { halign: 'right', cellWidth: 120 },
