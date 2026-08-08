@@ -690,6 +690,18 @@ body {
   border: 1px solid rgba(255, 255, 255, 0.15);
 }
 
+:root[data-theme="light"] .badge-general {
+  background: rgba(0, 0, 0, 0.06);
+  color: #555;
+  border: 1px solid rgba(0, 0, 0, 0.15);
+}
+
+:root[data-theme="light"] .badge-specialized {
+  background: rgba(0, 0, 0, 0.04);
+  color: #333;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+}
+
 /* Long text columns — truncate with ellipsis */
 .col-long {
   max-width: 200px;
