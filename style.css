@@ -104,6 +104,7 @@ body {
 .header.glass {
   backdrop-filter: none;
   -webkit-backdrop-filter: none;
+  overflow: visible;
 }
 
 .header-top {
@@ -147,7 +148,8 @@ body {
   cursor: pointer;
   outline: none;
   direction: rtl;
-  height: 34px;
+  height: 36px;
+  overflow: visible;
 }
 
 .semester-select:focus {
@@ -621,72 +623,15 @@ body {
    ======================================== */
 .skeleton-wrapper {
   display: none;
-  padding: 14px 16px;
 }
 
 .skeleton-wrapper.visible {
   display: block;
 }
 
-.skeleton-header {
-  display: flex;
-  gap: 20px;
-  padding-bottom: 14px;
-  border-bottom: 1px solid var(--glass-border);
-  margin-bottom: 4px;
-}
-
-.skeleton-cell {
-  height: 12px;
-  border-radius: 6px;
-  background: rgba(255, 255, 255, 0.06);
-  position: relative;
-  overflow: hidden;
-}
-
-.skeleton-cell::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.05), transparent);
-  animation: shimmer 1.5s infinite;
-}
-
-.skeleton-row {
-  display: flex;
-  gap: 20px;
-  padding: 12px 0;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.03);
-  animation-delay: calc(var(--delay) * 0.08s);
-}
-
-.skeleton-row::before {
-  content: '';
-  height: 12px;
-  width: 70px;
-  border-radius: 6px;
-  background: rgba(255, 255, 255, 0.06);
-  position: relative;
-  overflow: hidden;
-  animation: shimmer 1.5s infinite;
-  animation-delay: calc(var(--delay) * 0.08s);
-}
-
-.skeleton-row::after {
-  content: '';
-  height: 12px;
-  width: 160px;
-  border-radius: 6px;
-  background: rgba(255, 255, 255, 0.06);
-  position: relative;
-  overflow: hidden;
-  animation: shimmer 1.5s infinite;
-  animation-delay: calc(var(--delay) * 0.08s + 0.1s);
-}
-
-@keyframes shimmer {
-  0% { transform: translateX(-100%); }
-  100% { transform: translateX(100%); }
+.skeleton-wrapper svg {
+  display: block;
+  width: 100%;
 }
 
 /* ========================================

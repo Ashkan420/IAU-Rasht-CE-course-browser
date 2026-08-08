@@ -98,25 +98,127 @@
     <div class="table-wrapper glass">
       <!-- Skeleton Loading -->
       <div class="skeleton-wrapper visible" id="skeletonWrapper">
-        <div class="skeleton-header">
-          <div class="skeleton-cell" style="width:80px"></div>
-          <div class="skeleton-cell" style="width:140px"></div>
-          <div class="skeleton-cell" style="width:100px"></div>
-          <div class="skeleton-cell" style="width:80px"></div>
-          <div class="skeleton-cell" style="width:120px"></div>
-          <div class="skeleton-cell" style="width:70px"></div>
-          <div class="skeleton-cell" style="width:60px"></div>
-          <div class="skeleton-cell" style="width:130px"></div>
-          <div class="skeleton-cell" style="width:90px"></div>
-        </div>
-        <div class="skeleton-row" style="--delay:0"></div>
-        <div class="skeleton-row" style="--delay:1"></div>
-        <div class="skeleton-row" style="--delay:2"></div>
-        <div class="skeleton-row" style="--delay:3"></div>
-        <div class="skeleton-row" style="--delay:4"></div>
-        <div class="skeleton-row" style="--delay:5"></div>
-        <div class="skeleton-row" style="--delay:6"></div>
-        <div class="skeleton-row" style="--delay:7"></div>
+        <svg width="100%" height="420" viewBox="0 0 1200 420" preserveAspectRatio="xMidYMid meet">
+          <defs>
+            <linearGradient id="shimmer" x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%" stop-color="rgba(255,255,255,0)" />
+              <stop offset="50%" stop-color="rgba(255,255,255,0.04)" />
+              <stop offset="100%" stop-color="rgba(255,255,255,0)" />
+              <animateTransform attributeName="gradientTransform" type="translate"
+                values="-1 0; 1 0" dur="1.5s" repeatCount="indefinite" />
+            </linearGradient>
+          </defs>
+          <!-- Header row -->
+          <rect x="20" y="16" width="70" height="14" rx="4" fill="rgba(255,255,255,0.06)" />
+          <rect x="110" y="16" width="130" height="14" rx="4" fill="rgba(255,255,255,0.06)" />
+          <rect x="260" y="16" width="90" height="14" rx="4" fill="rgba(255,255,255,0.06)" />
+          <rect x="370" y="16" width="65" height="14" rx="4" fill="rgba(255,255,255,0.06)" />
+          <rect x="455" y="16" width="110" height="14" rx="4" fill="rgba(255,255,255,0.06)" />
+          <rect x="585" y="16" width="55" height="14" rx="4" fill="rgba(255,255,255,0.06)" />
+          <rect x="660" y="16" width="75" height="14" rx="4" fill="rgba(255,255,255,0.06)" />
+          <rect x="755" y="16" width="140" height="14" rx="4" fill="rgba(255,255,255,0.06)" />
+          <rect x="915" y="16" width="80" height="14" rx="4" fill="rgba(255,255,255,0.06)" />
+          <rect x="1015" y="16" width="60" height="14" rx="4" fill="rgba(255,255,255,0.06)" />
+          <rect x="1095" y="16" width="90" height="14" rx="4" fill="rgba(255,255,255,0.06)" />
+          <!-- Row 1 -->
+          <rect x="20" y="56" width="70" height="12" rx="4" fill="rgba(255,255,255,0.04)" />
+          <rect x="110" y="56" width="150" height="12" rx="4" fill="rgba(255,255,255,0.04)" />
+          <rect x="280" y="56" width="100" height="12" rx="4" fill="rgba(255,255,255,0.04)" />
+          <rect x="395" y="56" width="55" height="12" rx="4" fill="rgba(255,255,255,0.04)" />
+          <rect x="465" y="56" width="120" height="12" rx="4" fill="rgba(255,255,255,0.04)" />
+          <rect x="600" y="56" width="45" height="12" rx="4" fill="rgba(255,255,255,0.04)" />
+          <rect x="660" y="56" width="80" height="12" rx="4" fill="rgba(255,255,255,0.04)" />
+          <rect x="755" y="56" width="160" height="12" rx="4" fill="rgba(255,255,255,0.04)" />
+          <rect x="930" y="56" width="65" height="12" rx="4" fill="rgba(255,255,255,0.04)" />
+          <rect x="1015" y="56" width="50" height="12" rx="4" fill="rgba(255,255,255,0.04)" />
+          <rect x="1080" y="56" width="100" height="12" rx="4" fill="rgba(255,255,255,0.04)" />
+          <!-- Row 2 -->
+          <rect x="20" y="96" width="70" height="12" rx="4" fill="rgba(255,255,255,0.04)" />
+          <rect x="110" y="96" width="120" height="12" rx="4" fill="rgba(255,255,255,0.04)" />
+          <rect x="250" y="96" width="80" height="12" rx="4" fill="rgba(255,255,255,0.04)" />
+          <rect x="345" y="96" width="70" height="12" rx="4" fill="rgba(255,255,255,0.04)" />
+          <rect x="430" y="96" width="140" height="12" rx="4" fill="rgba(255,255,255,0.04)" />
+          <rect x="585" y="96" width="45" height="12" rx="4" fill="rgba(255,255,255,0.04)" />
+          <rect x="645" y="96" width="90" height="12" rx="4" fill="rgba(255,255,255,0.04)" />
+          <rect x="750" y="96" width="130" height="12" rx="4" fill="rgba(255,255,255,0.04)" />
+          <rect x="895" y="96" width="85" height="12" rx="4" fill="rgba(255,255,255,0.04)" />
+          <rect x="995" y="96" width="55" height="12" rx="4" fill="rgba(255,255,255,0.04)" />
+          <rect x="1065" y="96" width="115" height="12" rx="4" fill="rgba(255,255,255,0.04)" />
+          <!-- Row 3 -->
+          <rect x="20" y="136" width="70" height="12" rx="4" fill="rgba(255,255,255,0.04)" />
+          <rect x="110" y="136" width="170" height="12" rx="4" fill="rgba(255,255,255,0.04)" />
+          <rect x="295" y="136" width="75" height="12" rx="4" fill="rgba(255,255,255,0.04)" />
+          <rect x="385" y="136" width="60" height="12" rx="4" fill="rgba(255,255,255,0.04)" />
+          <rect x="460" y="136" width="100" height="12" rx="4" fill="rgba(255,255,255,0.04)" />
+          <rect x="575" y="136" width="55" height="12" rx="4" fill="rgba(255,255,255,0.04)" />
+          <rect x="645" y="136" width="70" height="12" rx="4" fill="rgba(255,255,255,0.04)" />
+          <rect x="730" y="136" width="150" height="12" rx="4" fill="rgba(255,255,255,0.04)" />
+          <rect x="895" y="136" width="75" height="12" rx="4" fill="rgba(255,255,255,0.04)" />
+          <rect x="985" y="136" width="65" height="12" rx="4" fill="rgba(255,255,255,0.04)" />
+          <rect x="1065" y="136" width="110" height="12" rx="4" fill="rgba(255,255,255,0.04)" />
+          <!-- Row 4 -->
+          <rect x="20" y="176" width="70" height="12" rx="4" fill="rgba(255,255,255,0.04)" />
+          <rect x="110" y="176" width="110" height="12" rx="4" fill="rgba(255,255,255,0.04)" />
+          <rect x="235" y="176" width="95" height="12" rx="4" fill="rgba(255,255,255,0.04)" />
+          <rect x="345" y="176" width="55" height="12" rx="4" fill="rgba(255,255,255,0.04)" />
+          <rect x="415" y="176" width="130" height="12" rx="4" fill="rgba(255,255,255,0.04)" />
+          <rect x="560" y="176" width="45" height="12" rx="4" fill="rgba(255,255,255,0.04)" />
+          <rect x="620" y="176" width="85" height="12" rx="4" fill="rgba(255,255,255,0.04)" />
+          <rect x="720" y="176" width="140" height="12" rx="4" fill="rgba(255,255,255,0.04)" />
+          <rect x="875" y="176" width="95" height="12" rx="4" fill="rgba(255,255,255,0.04)" />
+          <rect x="985" y="176" width="55" height="12" rx="4" fill="rgba(255,255,255,0.04)" />
+          <rect x="1055" y="176" width="120" height="12" rx="4" fill="rgba(255,255,255,0.04)" />
+          <!-- Row 5 -->
+          <rect x="20" y="216" width="70" height="12" rx="4" fill="rgba(255,255,255,0.04)" />
+          <rect x="110" y="216" width="140" height="12" rx="4" fill="rgba(255,255,255,0.04)" />
+          <rect x="265" y="216" width="85" height="12" rx="4" fill="rgba(255,255,255,0.04)" />
+          <rect x="365" y="216" width="65" height="12" rx="4" fill="rgba(255,255,255,0.04)" />
+          <rect x="445" y="216" width="110" height="12" rx="4" fill="rgba(255,255,255,0.04)" />
+          <rect x="570" y="216" width="50" height="12" rx="4" fill="rgba(255,255,255,0.04)" />
+          <rect x="635" y="216" width="80" height="12" rx="4" fill="rgba(255,255,255,0.04)" />
+          <rect x="730" y="216" width="155" height="12" rx="4" fill="rgba(255,255,255,0.04)" />
+          <rect x="900" y="216" width="70" height="12" rx="4" fill="rgba(255,255,255,0.04)" />
+          <rect x="985" y="216" width="60" height="12" rx="4" fill="rgba(255,255,255,0.04)" />
+          <rect x="1060" y="216" width="105" height="12" rx="4" fill="rgba(255,255,255,0.04)" />
+          <!-- Row 6 -->
+          <rect x="20" y="256" width="70" height="12" rx="4" fill="rgba(255,255,255,0.04)" />
+          <rect x="110" y="256" width="125" height="12" rx="4" fill="rgba(255,255,255,0.04)" />
+          <rect x="250" y="256" width="90" height="12" rx="4" fill="rgba(255,255,255,0.04)" />
+          <rect x="355" y="256" width="60" height="12" rx="4" fill="rgba(255,255,255,0.04)" />
+          <rect x="430" y="256" width="125" height="12" rx="4" fill="rgba(255,255,255,0.04)" />
+          <rect x="570" y="256" width="50" height="12" rx="4" fill="rgba(255,255,255,0.04)" />
+          <rect x="635" y="256" width="75" height="12" rx="4" fill="rgba(255,255,255,0.04)" />
+          <rect x="725" y="256" width="145" height="12" rx="4" fill="rgba(255,255,255,0.04)" />
+          <rect x="885" y="256" width="80" height="12" rx="4" fill="rgba(255,255,255,0.04)" />
+          <rect x="980" y="256" width="55" height="12" rx="4" fill="rgba(255,255,255,0.04)" />
+          <rect x="1050" y="256" width="115" height="12" rx="4" fill="rgba(255,255,255,0.04)" />
+          <!-- Row 7 -->
+          <rect x="20" y="296" width="70" height="12" rx="4" fill="rgba(255,255,255,0.04)" />
+          <rect x="110" y="296" width="155" height="12" rx="4" fill="rgba(255,255,255,0.04)" />
+          <rect x="280" y="296" width="80" height="12" rx="4" fill="rgba(255,255,255,0.04)" />
+          <rect x="375" y="296" width="55" height="12" rx="4" fill="rgba(255,255,255,0.04)" />
+          <rect x="445" y="296" width="135" height="12" rx="4" fill="rgba(255,255,255,0.04)" />
+          <rect x="595" y="296" width="45" height="12" rx="4" fill="rgba(255,255,255,0.04)" />
+          <rect x="655" y="296" width="85" height="12" rx="4" fill="rgba(255,255,255,0.04)" />
+          <rect x="755" y="296" width="130" height="12" rx="4" fill="rgba(255,255,255,0.04)" />
+          <rect x="900" y="296" width="70" height="12" rx="4" fill="rgba(255,255,255,0.04)" />
+          <rect x="985" y="296" width="60" height="12" rx="4" fill="rgba(255,255,255,0.04)" />
+          <rect x="1060" y="296" width="110" height="12" rx="4" fill="rgba(255,255,255,0.04)" />
+          <!-- Row 8 -->
+          <rect x="20" y="336" width="70" height="12" rx="4" fill="rgba(255,255,255,0.04)" />
+          <rect x="110" y="336" width="135" height="12" rx="4" fill="rgba(255,255,255,0.04)" />
+          <rect x="260" y="336" width="75" height="12" rx="4" fill="rgba(255,255,255,0.04)" />
+          <rect x="350" y="336" width="65" height="12" rx="4" fill="rgba(255,255,255,0.04)" />
+          <rect x="430" y="336" width="115" height="12" rx="4" fill="rgba(255,255,255,0.04)" />
+          <rect x="560" y="336" width="50" height="12" rx="4" fill="rgba(255,255,255,0.04)" />
+          <rect x="625" y="336" width="80" height="12" rx="4" fill="rgba(255,255,255,0.04)" />
+          <rect x="720" y="336" width="150" height="12" rx="4" fill="rgba(255,255,255,0.04)" />
+          <rect x="885" y="336" width="85" height="12" rx="4" fill="rgba(255,255,255,0.04)" />
+          <rect x="985" y="336" width="55" height="12" rx="4" fill="rgba(255,255,255,0.04)" />
+          <rect x="1055" y="336" width="120" height="12" rx="4" fill="rgba(255,255,255,0.04)" />
+          <!-- Shimmer overlay -->
+          <rect x="0" y="0" width="1200" height="420" fill="url(#shimmer)" />
+        </svg>
       </div>
       <table id="courseTable">
         <thead id="courseTableHead">
