@@ -659,31 +659,33 @@
     themeToggle.textContent = savedTheme === 'dark' ? '☀️' : '🌙';
 
     themeToggle.addEventListener('click', (e) => {
-      const rect = e.target.getBoundingClientRect();
-      const x = ((rect.left + rect.width / 2) / window.innerWidth) * 100;
-      const y = ((rect.top + rect.height / 2) / window.innerHeight) * 100;
+      // Use clientX/clientY for reliable positioning on all devices
+      const x = (e.clientX / window.innerWidth) * 100;
+      const y = (e.clientY / window.innerHeight) * 100;
 
       htmlEl.style.setProperty('--reveal-x', x + '%');
       htmlEl.style.setProperty('--reveal-y', y + '%');
 
       const newTheme = htmlEl.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
 
-      // Start transition
+      // Start transition — double rAF ensures the initial state is painted first
       htmlEl.classList.add('theme-transitioning');
       htmlEl.style.setProperty('--reveal-radius', '0%');
 
       requestAnimationFrame(() => {
-        htmlEl.classList.add('theme-reveal');
-        htmlEl.setAttribute('data-theme', newTheme);
-        themeToggle.textContent = newTheme === 'dark' ? '☀️' : '🌙';
-        localStorage.setItem('theme', newTheme);
+        requestAnimationFrame(() => {
+          htmlEl.classList.add('theme-reveal');
+          htmlEl.setAttribute('data-theme', newTheme);
+          themeToggle.textContent = newTheme === 'dark' ? '☀️' : '🌙';
+          localStorage.setItem('theme', newTheme);
+        });
       });
 
       // Clean up after transition
       setTimeout(() => {
         htmlEl.classList.remove('theme-transitioning', 'theme-reveal');
         htmlEl.style.removeProperty('--reveal-radius');
-      }, 550);
+      }, 650);
     });
   }
 
