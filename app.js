@@ -503,11 +503,49 @@
 
     const data = filteredCourses.map((c) => tableColumns.map((col) => c[col] || ''));
     const ws = XLSX.utils.aoa_to_sheet([tableColumns, ...data]);
-    ws['!cols'] = tableColumns.map(() => ({ wch: 20 }));
+
+    // Auto-fit column widths (capped like scraper)
+    const narrowCols = ['ظرفیت', 'کد درس', 'کد ارائه', 'جنسیت', 'نوع درس', 'نوع واحد', 'مقطع ارائه', 'سطح ارائه', 'کد گروه آموزشی'];
+    tableColumns.forEach((col, i) => {
+      let maxLen = col.length;
+      for (const c of filteredCourses) {
+        const val = (c[col] || '').toString();
+        maxLen = Math.max(maxLen, val.length);
+      }
+      let cap = 40;
+      if (narrowCols.includes(col)) cap = 15;
+      if (col.includes('زمانبندی')) cap = 80;
+      ws['!cols'][i] = { wch: Math.min(maxLen + 2, cap) };
+    });
+
+    // Freeze header row + auto filter
+    ws.freeze_panes = 'A2';
+    ws.auto_filter.ref = ws.dimensions;
+
+    // RTL
+    ws.sheet_view = ws.sheet_view || {};
+    ws.sheet_view.rightToLeft = true;
+
+    // Landscape A4 print settings
+    ws.page_setup = { orientation: 'landscape', paperSize: 9, fitToWidth: 1, fitToHeight: 0 };
+    ws.sheet_properties = { pageSetUpPr: { fitToPage: true } };
+
+    // Style header row
+    const range = XLSX.utils.decode_range(ws['!ref']);
+    for (let c = range.s.c; c <= range.e.c; c++) {
+      const addr = XLSX.utils.encode_cell({ r: 0, c });
+      if (ws[addr]) {
+        ws[addr].s = {
+          font: { bold: true, color: { rgb: 'FFFFFF' }, sz: 10 },
+          fill: { fgColor: { rgb: '1E1E1E' } },
+          alignment: { horizontal: 'center', vertical: 'center', wrapText: true }
+        };
+      }
+    }
 
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, 'Courses');
-    XLSX.writeFile(wb, 'courses.xlsx');
+    XLSX.writeFile(wb, 'courses.xlsx', { cellStyles: true });
   }
 
   // ── Event listeners ────────────────────────────────────────────
