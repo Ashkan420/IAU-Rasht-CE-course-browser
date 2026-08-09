@@ -464,11 +464,30 @@
   }
 
   // ── Export: PDF (Browser Print) ─────────────────────────────────
+  // Columns to hide in PDF output
+  const PDF_HIDDEN_COLS = new Set(['کد گروه آموزشی', 'نام گروه آموزشی', 'سطح ارائه']);
+
   function exportPdf() {
     if (!filteredCourses.length) return;
+
+    // Temporarily hide unwanted columns by index
+    const hiddenCells = [];
+    $$('.table-wrapper th, .table-wrapper td').forEach((el) => {
+      const colIndex = Array.from(el.parentElement.children).indexOf(el);
+      const colName = tableColumns[colIndex];
+      if (PDF_HIDDEN_COLS.has(colName)) {
+        el.style.display = 'none';
+        hiddenCells.push(el);
+      }
+    });
+
     document.body.classList.add('printing');
     window.print();
-    setTimeout(() => document.body.classList.remove('printing'), 1000);
+    setTimeout(() => {
+      document.body.classList.remove('printing');
+      // Restore hidden cells
+      hiddenCells.forEach((el) => { el.style.display = ''; });
+    }, 1000);
   }
 
   // ── Export: XLSX (ExcelJS) ─────────────────────────────────────
