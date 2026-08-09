@@ -29,6 +29,21 @@
   --radius-md: 12px;
   --radius-lg: 16px;
   --transition: 0.2s ease;
+  /* Derived tokens */
+  --input-bg: rgba(0, 0, 0, 0.2);
+  --input-border-focus: rgba(255, 255, 255, 0.3);
+  --input-focus-ring: rgba(255, 255, 255, 0.05);
+  --row-hover: rgba(255, 255, 255, 0.04);
+  --row-alt: rgba(255, 255, 255, 0.015);
+  --thead-bg: rgba(255, 255, 255, 0.04);
+  --cell-border: rgba(255, 255, 255, 0.04);
+  --btn-bg: rgba(255, 255, 255, 0.06);
+  --btn-hover: rgba(255, 255, 255, 0.12);
+  --btn-hover-border: rgba(255, 255, 255, 0.2);
+  --chip-bg: rgba(255, 255, 255, 0.06);
+  --chip-border: rgba(255, 255, 255, 0.12);
+  --scrollbar-thumb: rgba(255, 255, 255, 0.1);
+  --scrollbar-hover: rgba(255, 255, 255, 0.18);
 }
 
 :root[data-theme="light"] {
@@ -47,20 +62,26 @@
   --danger: #dc2626;
   --danger-hover: #ef4444;
   --success: #555;
+  /* Derived tokens */
+  --input-bg: rgba(0, 0, 0, 0.04);
+  --input-border-focus: rgba(0, 0, 0, 0.25);
+  --input-focus-ring: rgba(0, 0, 0, 0.05);
+  --row-hover: rgba(0, 0, 0, 0.04);
+  --row-alt: rgba(0, 0, 0, 0.015);
+  --thead-bg: rgba(0, 0, 0, 0.03);
+  --cell-border: rgba(0, 0, 0, 0.06);
+  --btn-bg: rgba(0, 0, 0, 0.04);
+  --btn-hover: rgba(0, 0, 0, 0.08);
+  --btn-hover-border: rgba(0, 0, 0, 0.15);
+  --chip-bg: rgba(0, 0, 0, 0.04);
+  --chip-border: rgba(0, 0, 0, 0.1);
+  --scrollbar-thumb: rgba(0, 0, 0, 0.12);
+  --scrollbar-hover: rgba(0, 0, 0, 0.2);
 }
 
-/* Smooth theme transition on key elements */
-body,
-.glass,
-.btn,
-.cat-btn,
-.input-group input,
-.semester-select,
-.theme-toggle,
-.table-wrapper th,
-.table-wrapper td {
-  transition: background-color 0.4s ease, color 0.4s ease, border-color 0.4s ease, box-shadow 0.4s ease;
-}
+/* Smooth theme transition */
+body { transition: background-color 0.4s ease, color 0.3s ease; }
+.glass { transition: background 0.4s ease, border-color 0.3s ease, box-shadow 0.3s ease; }
 
 html {
   font-size: 16px;
@@ -110,7 +131,7 @@ body {
   -webkit-backdrop-filter: blur(var(--glass-blur));
   border: 1px solid var(--glass-border);
   border-radius: var(--radius-lg);
-  box-shadow: var(--glass-shadow);
+  box-shadow: var(--glass-shadow), inset 0 1px 0 rgba(255, 255, 255, 0.03);
 }
 
 /* ========================================
@@ -243,7 +264,7 @@ body {
   padding: 8px 16px;
   border: 1px solid var(--glass-border);
   border-radius: var(--radius-sm);
-  background: rgba(255, 255, 255, 0.06);
+  background: var(--btn-bg);
   color: var(--text-primary);
   font-family: inherit;
   font-size: 0.85rem;
@@ -254,8 +275,8 @@ body {
 }
 
 .btn:hover {
-  background: rgba(255, 255, 255, 0.12);
-  border-color: rgba(255, 255, 255, 0.2);
+  background: var(--btn-hover);
+  border-color: var(--btn-hover-border);
 }
 
 .btn-export svg {
@@ -289,7 +310,7 @@ body {
   justify-content: center;
   border: none;
   border-radius: 6px;
-  background: rgba(255, 255, 255, 0.06);
+  background: var(--btn-bg);
   color: var(--text-muted);
   font-size: 1.1rem;
   font-weight: 600;
@@ -300,7 +321,7 @@ body {
 }
 
 .btn-add:hover {
-  background: rgba(255, 255, 255, 0.1);
+  background: var(--btn-hover);
   color: var(--text-primary);
 }
 
@@ -326,6 +347,7 @@ body {
 .cat-btn {
   flex: 1;
   padding: 10px 20px;
+  min-height: 42px;
   border: 1px solid transparent;
   border-radius: var(--radius-sm);
   background: transparent;
@@ -400,12 +422,12 @@ body {
   padding: 9px 14px 9px 46px;
   border: 1px solid var(--glass-border);
   border-radius: var(--radius-sm);
-  background: rgba(0, 0, 0, 0.2);
+  background: var(--input-bg);
   color: var(--text-primary);
   font-family: inherit;
   font-size: 0.9rem;
   outline: none;
-  transition: border-color var(--transition), background var(--transition);
+  transition: border-color var(--transition), background var(--transition), box-shadow var(--transition);
   direction: rtl;
 }
 
@@ -414,25 +436,8 @@ body {
 }
 
 .input-group input:focus {
-  border-color: rgba(255, 255, 255, 0.3);
-}
-
-:root[data-theme="light"] .input-group input {
-  background: rgba(0, 0, 0, 0.04);
-  border-color: rgba(0, 0, 0, 0.12);
-}
-
-:root[data-theme="light"] .input-group input:focus {
-  border-color: rgba(0, 0, 0, 0.25);
-}
-
-:root[data-theme="light"] .input-group input {
-  background: rgba(0, 0, 0, 0.04);
-  border-color: rgba(0, 0, 0, 0.12);
-}
-
-:root[data-theme="light"] .input-group input:focus {
-  border-color: rgba(0, 0, 0, 0.25);
+  border-color: var(--input-border-focus);
+  box-shadow: 0 0 0 2px var(--input-focus-ring);
 }
 
 /* ========================================
@@ -459,14 +464,14 @@ body {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 6px 12px;
+  padding: 5px 12px;
   border-radius: 20px;
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: var(--chip-bg);
+  border: 1px solid var(--chip-border);
   color: var(--accent);
-  font-size: 0.82rem;
+  font-size: 0.8rem;
   font-weight: 500;
-  animation: chipIn 0.25s ease;
+  animation: chipIn 0.2s ease;
 }
 
 @keyframes chipIn {
@@ -602,15 +607,18 @@ body {
 }
 
 .table-wrapper thead {
-  background: rgba(255, 255, 255, 0.04);
+  background: var(--thead-bg);
+  position: sticky;
+  top: 0;
+  z-index: 1;
 }
 
 .table-wrapper th {
   padding: 14px 16px;
   text-align: right;
   font-weight: 600;
-  font-size: 0.82rem;
-  color: var(--text-secondary);
+  font-size: 0.78rem;
+  color: var(--text-muted);
   border-bottom: 1px solid var(--glass-border);
   cursor: pointer;
   user-select: none;
@@ -621,7 +629,7 @@ body {
 
 .table-wrapper td {
   padding: 12px 16px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  border-bottom: 1px solid var(--cell-border);
   color: var(--text-primary);
   transition: background var(--transition);
   white-space: nowrap;
@@ -661,8 +669,12 @@ body {
   transition: background var(--transition);
 }
 
+.table-wrapper tbody tr:nth-child(even) {
+  background: var(--row-alt);
+}
+
 .table-wrapper tbody tr:hover {
-  background: rgba(255, 255, 255, 0.04);
+  background: var(--row-hover);
 }
 
 .table-wrapper tbody tr:last-child td {
@@ -754,8 +766,12 @@ body {
 }
 
 .table-wrapper::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 3px;
+  background: var(--scrollbar-thumb);
+  border-radius: 4px;
+}
+
+.table-wrapper::-webkit-scrollbar-thumb:hover {
+  background: var(--scrollbar-hover);
 }
 
 /* ========================================
@@ -832,6 +848,7 @@ body {
   .category-filter .cat-btn,
   .gender-filter .cat-btn {
     padding: 8px 10px;
+    min-height: 36px;
     font-size: 0.82rem;
   }
 
@@ -863,6 +880,16 @@ body {
   .btn-export svg {
     width: 16px;
     height: 16px;
+  }
+}
+
+@media (max-width: 380px) {
+  .header-actions {
+    flex-wrap: wrap;
+  }
+
+  .semester-select {
+    width: 100%;
   }
 }
 
