@@ -653,8 +653,10 @@ body {
 }
 
 .table-wrapper th .sort-arrow {
-  display: inline-block;
-  margin-right: 4px;
+  position: absolute;
+  right: 4px;
+  top: 50%;
+  transform: translateY(-50%);
   font-size: 0.7rem;
   opacity: 0;
   transition: opacity var(--transition);
