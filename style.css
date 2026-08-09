@@ -734,13 +734,12 @@ body {
   max-width: 200px;
   overflow: hidden;
   text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 /* Short value columns — center aligned */
 .col-center {
-  text-align: center;
-}
-  white-space: nowrap;
+  text-align: center !important;
 }
 
 /* Empty state */
