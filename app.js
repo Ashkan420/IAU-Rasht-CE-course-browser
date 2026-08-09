@@ -522,11 +522,16 @@
       sortDir = 'asc';
       activeFilters = [];
       currentCategory = 'همه';
+      currentGender = 'همه';
       $$('.cat-btn').forEach((b) => {
         b.classList.remove('active');
         b.setAttribute('aria-pressed', 'false');
       });
       $$('.cat-btn[data-cat="همه"]').forEach((b) => {
+        b.classList.add('active');
+        b.setAttribute('aria-pressed', 'true');
+      });
+      $$('.cat-btn[data-gender="همه"]').forEach((b) => {
         b.classList.add('active');
         b.setAttribute('aria-pressed', 'true');
       });

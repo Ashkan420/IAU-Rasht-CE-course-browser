@@ -254,6 +254,11 @@ body {
   color: var(--text-primary);
 }
 
+:root[data-theme="light"] .semester-select option {
+  background: #fff;
+  color: #1a1a1a;
+}
+
 /* ========================================
    Buttons
    ======================================== */
@@ -368,6 +373,14 @@ body {
   background: var(--accent-dim);
   border-color: rgba(255, 255, 255, 0.15);
   color: var(--accent);
+}
+
+:root[data-theme="light"] .cat-btn {
+  border-color: rgba(0, 0, 0, 0.08);
+}
+
+:root[data-theme="light"] .cat-btn.active {
+  border-color: rgba(0, 0, 0, 0.15);
 }
 
 /* ========================================
