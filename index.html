@@ -15,7 +15,13 @@
     <!-- Header -->
     <header class="header glass">
       <div class="header-top">
-        <h1 class="title">جستجوی دروس</h1>
+        <div class="header-right">
+          <!-- Mode Switcher -->
+          <nav class="mode-switch" role="tablist" aria-label="حالت نمایش">
+            <button class="mode-tab active" data-mode="browser" role="tab" aria-selected="true">جستجوی دروس</button>
+            <button class="mode-tab" data-mode="schedule" role="tab" aria-selected="false">برنامه ساز</button>
+          </nav>
+        </div>
         <div class="header-actions">
           <select class="semester-select" id="semesterSelect"></select>
           <button class="theme-toggle" id="themeToggle" title="تغییر تم">☀️</button>
@@ -95,146 +101,156 @@
       <button class="error-banner-close" id="errorBannerClose">&times;</button>
     </div>
 
-    <!-- Table -->
-    <div class="table-wrapper glass" dir="rtl">
-      <!-- Skeleton Loading -->
-      <div class="skeleton-wrapper visible" id="skeletonWrapper">
-        <svg width="100%" viewBox="0 0 1200 420" preserveAspectRatio="xMidYMin slice">
-          <defs>
-            <linearGradient id="shimmer" x1="0%" y1="0%" x2="100%" y2="0%">
-              <stop offset="0%" stop-color="rgba(255,255,255,0)" />
-              <stop offset="50%" stop-color="rgba(255,255,255,0.04)" />
-              <stop offset="100%" stop-color="rgba(255,255,255,0)" />
-              <animateTransform attributeName="gradientTransform" type="translate"
-                values="-1 0; 1 0" dur="1.5s" repeatCount="indefinite" />
-            </linearGradient>
-          </defs>
-          <!-- Header row -->
-          <rect x="20" y="16" width="70" height="14" rx="4" fill="rgba(255,255,255,0.06)" />
-          <rect x="110" y="16" width="130" height="14" rx="4" fill="rgba(255,255,255,0.06)" />
-          <rect x="260" y="16" width="90" height="14" rx="4" fill="rgba(255,255,255,0.06)" />
-          <rect x="370" y="16" width="65" height="14" rx="4" fill="rgba(255,255,255,0.06)" />
-          <rect x="455" y="16" width="110" height="14" rx="4" fill="rgba(255,255,255,0.06)" />
-          <rect x="585" y="16" width="55" height="14" rx="4" fill="rgba(255,255,255,0.06)" />
-          <rect x="660" y="16" width="75" height="14" rx="4" fill="rgba(255,255,255,0.06)" />
-          <rect x="755" y="16" width="140" height="14" rx="4" fill="rgba(255,255,255,0.06)" />
-          <rect x="915" y="16" width="80" height="14" rx="4" fill="rgba(255,255,255,0.06)" />
-          <rect x="1015" y="16" width="60" height="14" rx="4" fill="rgba(255,255,255,0.06)" />
-          <rect x="1095" y="16" width="90" height="14" rx="4" fill="rgba(255,255,255,0.06)" />
-          <!-- Row 1 -->
-          <rect x="20" y="56" width="70" height="12" rx="4" fill="rgba(255,255,255,0.04)" />
-          <rect x="110" y="56" width="150" height="12" rx="4" fill="rgba(255,255,255,0.04)" />
-          <rect x="280" y="56" width="100" height="12" rx="4" fill="rgba(255,255,255,0.04)" />
-          <rect x="395" y="56" width="55" height="12" rx="4" fill="rgba(255,255,255,0.04)" />
-          <rect x="465" y="56" width="120" height="12" rx="4" fill="rgba(255,255,255,0.04)" />
-          <rect x="600" y="56" width="45" height="12" rx="4" fill="rgba(255,255,255,0.04)" />
-          <rect x="660" y="56" width="80" height="12" rx="4" fill="rgba(255,255,255,0.04)" />
-          <rect x="755" y="56" width="160" height="12" rx="4" fill="rgba(255,255,255,0.04)" />
-          <rect x="930" y="56" width="65" height="12" rx="4" fill="rgba(255,255,255,0.04)" />
-          <rect x="1015" y="56" width="50" height="12" rx="4" fill="rgba(255,255,255,0.04)" />
-          <rect x="1080" y="56" width="100" height="12" rx="4" fill="rgba(255,255,255,0.04)" />
-          <!-- Row 2 -->
-          <rect x="20" y="96" width="70" height="12" rx="4" fill="rgba(255,255,255,0.04)" />
-          <rect x="110" y="96" width="120" height="12" rx="4" fill="rgba(255,255,255,0.04)" />
-          <rect x="250" y="96" width="80" height="12" rx="4" fill="rgba(255,255,255,0.04)" />
-          <rect x="345" y="96" width="70" height="12" rx="4" fill="rgba(255,255,255,0.04)" />
-          <rect x="430" y="96" width="140" height="12" rx="4" fill="rgba(255,255,255,0.04)" />
-          <rect x="585" y="96" width="45" height="12" rx="4" fill="rgba(255,255,255,0.04)" />
-          <rect x="645" y="96" width="90" height="12" rx="4" fill="rgba(255,255,255,0.04)" />
-          <rect x="750" y="96" width="130" height="12" rx="4" fill="rgba(255,255,255,0.04)" />
-          <rect x="895" y="96" width="85" height="12" rx="4" fill="rgba(255,255,255,0.04)" />
-          <rect x="995" y="96" width="55" height="12" rx="4" fill="rgba(255,255,255,0.04)" />
-          <rect x="1065" y="96" width="115" height="12" rx="4" fill="rgba(255,255,255,0.04)" />
-          <!-- Row 3 -->
-          <rect x="20" y="136" width="70" height="12" rx="4" fill="rgba(255,255,255,0.04)" />
-          <rect x="110" y="136" width="170" height="12" rx="4" fill="rgba(255,255,255,0.04)" />
-          <rect x="295" y="136" width="75" height="12" rx="4" fill="rgba(255,255,255,0.04)" />
-          <rect x="385" y="136" width="60" height="12" rx="4" fill="rgba(255,255,255,0.04)" />
-          <rect x="460" y="136" width="100" height="12" rx="4" fill="rgba(255,255,255,0.04)" />
-          <rect x="575" y="136" width="55" height="12" rx="4" fill="rgba(255,255,255,0.04)" />
-          <rect x="645" y="136" width="70" height="12" rx="4" fill="rgba(255,255,255,0.04)" />
-          <rect x="730" y="136" width="150" height="12" rx="4" fill="rgba(255,255,255,0.04)" />
-          <rect x="895" y="136" width="75" height="12" rx="4" fill="rgba(255,255,255,0.04)" />
-          <rect x="985" y="136" width="65" height="12" rx="4" fill="rgba(255,255,255,0.04)" />
-          <rect x="1065" y="136" width="110" height="12" rx="4" fill="rgba(255,255,255,0.04)" />
-          <!-- Row 4 -->
-          <rect x="20" y="176" width="70" height="12" rx="4" fill="rgba(255,255,255,0.04)" />
-          <rect x="110" y="176" width="110" height="12" rx="4" fill="rgba(255,255,255,0.04)" />
-          <rect x="235" y="176" width="95" height="12" rx="4" fill="rgba(255,255,255,0.04)" />
-          <rect x="345" y="176" width="55" height="12" rx="4" fill="rgba(255,255,255,0.04)" />
-          <rect x="415" y="176" width="130" height="12" rx="4" fill="rgba(255,255,255,0.04)" />
-          <rect x="560" y="176" width="45" height="12" rx="4" fill="rgba(255,255,255,0.04)" />
-          <rect x="620" y="176" width="85" height="12" rx="4" fill="rgba(255,255,255,0.04)" />
-          <rect x="720" y="176" width="140" height="12" rx="4" fill="rgba(255,255,255,0.04)" />
-          <rect x="875" y="176" width="95" height="12" rx="4" fill="rgba(255,255,255,0.04)" />
-          <rect x="985" y="176" width="55" height="12" rx="4" fill="rgba(255,255,255,0.04)" />
-          <rect x="1055" y="176" width="120" height="12" rx="4" fill="rgba(255,255,255,0.04)" />
-          <!-- Row 5 -->
-          <rect x="20" y="216" width="70" height="12" rx="4" fill="rgba(255,255,255,0.04)" />
-          <rect x="110" y="216" width="140" height="12" rx="4" fill="rgba(255,255,255,0.04)" />
-          <rect x="265" y="216" width="85" height="12" rx="4" fill="rgba(255,255,255,0.04)" />
-          <rect x="365" y="216" width="65" height="12" rx="4" fill="rgba(255,255,255,0.04)" />
-          <rect x="445" y="216" width="110" height="12" rx="4" fill="rgba(255,255,255,0.04)" />
-          <rect x="570" y="216" width="50" height="12" rx="4" fill="rgba(255,255,255,0.04)" />
-          <rect x="635" y="216" width="80" height="12" rx="4" fill="rgba(255,255,255,0.04)" />
-          <rect x="730" y="216" width="155" height="12" rx="4" fill="rgba(255,255,255,0.04)" />
-          <rect x="900" y="216" width="70" height="12" rx="4" fill="rgba(255,255,255,0.04)" />
-          <rect x="985" y="216" width="60" height="12" rx="4" fill="rgba(255,255,255,0.04)" />
-          <rect x="1060" y="216" width="105" height="12" rx="4" fill="rgba(255,255,255,0.04)" />
-          <!-- Row 6 -->
-          <rect x="20" y="256" width="70" height="12" rx="4" fill="rgba(255,255,255,0.04)" />
-          <rect x="110" y="256" width="125" height="12" rx="4" fill="rgba(255,255,255,0.04)" />
-          <rect x="250" y="256" width="90" height="12" rx="4" fill="rgba(255,255,255,0.04)" />
-          <rect x="355" y="256" width="60" height="12" rx="4" fill="rgba(255,255,255,0.04)" />
-          <rect x="430" y="256" width="125" height="12" rx="4" fill="rgba(255,255,255,0.04)" />
-          <rect x="570" y="256" width="50" height="12" rx="4" fill="rgba(255,255,255,0.04)" />
-          <rect x="635" y="256" width="75" height="12" rx="4" fill="rgba(255,255,255,0.04)" />
-          <rect x="725" y="256" width="145" height="12" rx="4" fill="rgba(255,255,255,0.04)" />
-          <rect x="885" y="256" width="80" height="12" rx="4" fill="rgba(255,255,255,0.04)" />
-          <rect x="980" y="256" width="55" height="12" rx="4" fill="rgba(255,255,255,0.04)" />
-          <rect x="1050" y="256" width="115" height="12" rx="4" fill="rgba(255,255,255,0.04)" />
-          <!-- Row 7 -->
-          <rect x="20" y="296" width="70" height="12" rx="4" fill="rgba(255,255,255,0.04)" />
-          <rect x="110" y="296" width="155" height="12" rx="4" fill="rgba(255,255,255,0.04)" />
-          <rect x="280" y="296" width="80" height="12" rx="4" fill="rgba(255,255,255,0.04)" />
-          <rect x="375" y="296" width="55" height="12" rx="4" fill="rgba(255,255,255,0.04)" />
-          <rect x="445" y="296" width="135" height="12" rx="4" fill="rgba(255,255,255,0.04)" />
-          <rect x="595" y="296" width="45" height="12" rx="4" fill="rgba(255,255,255,0.04)" />
-          <rect x="655" y="296" width="85" height="12" rx="4" fill="rgba(255,255,255,0.04)" />
-          <rect x="755" y="296" width="130" height="12" rx="4" fill="rgba(255,255,255,0.04)" />
-          <rect x="900" y="296" width="70" height="12" rx="4" fill="rgba(255,255,255,0.04)" />
-          <rect x="985" y="296" width="60" height="12" rx="4" fill="rgba(255,255,255,0.04)" />
-          <rect x="1060" y="296" width="110" height="12" rx="4" fill="rgba(255,255,255,0.04)" />
-          <!-- Row 8 -->
-          <rect x="20" y="336" width="70" height="12" rx="4" fill="rgba(255,255,255,0.04)" />
-          <rect x="110" y="336" width="135" height="12" rx="4" fill="rgba(255,255,255,0.04)" />
-          <rect x="260" y="336" width="75" height="12" rx="4" fill="rgba(255,255,255,0.04)" />
-          <rect x="350" y="336" width="65" height="12" rx="4" fill="rgba(255,255,255,0.04)" />
-          <rect x="430" y="336" width="115" height="12" rx="4" fill="rgba(255,255,255,0.04)" />
-          <rect x="560" y="336" width="50" height="12" rx="4" fill="rgba(255,255,255,0.04)" />
-          <rect x="625" y="336" width="80" height="12" rx="4" fill="rgba(255,255,255,0.04)" />
-          <rect x="720" y="336" width="150" height="12" rx="4" fill="rgba(255,255,255,0.04)" />
-          <rect x="885" y="336" width="85" height="12" rx="4" fill="rgba(255,255,255,0.04)" />
-          <rect x="985" y="336" width="55" height="12" rx="4" fill="rgba(255,255,255,0.04)" />
-          <rect x="1055" y="336" width="120" height="12" rx="4" fill="rgba(255,255,255,0.04)" />
-          <!-- Shimmer overlay -->
-          <rect x="0" y="0" width="1200" height="420" fill="url(#shimmer)" />
-        </svg>
+    <!-- ═══ Browser Mode ═══ -->
+    <div id="browserMode" class="browser-mode">
+      <div class="table-wrapper glass" dir="rtl">
+        <!-- Skeleton Loading -->
+        <div class="skeleton-wrapper visible" id="skeletonWrapper">
+          <svg width="100%" viewBox="0 0 1200 420" preserveAspectRatio="xMidYMin slice">
+            <defs>
+              <linearGradient id="shimmer" x1="0%" y1="0%" x2="100%" y2="0%">
+                <stop offset="0%" stop-color="rgba(255,255,255,0)" />
+                <stop offset="50%" stop-color="rgba(255,255,255,0.04)" />
+                <stop offset="100%" stop-color="rgba(255,255,255,0)" />
+                <animateTransform attributeName="gradientTransform" type="translate"
+                  values="-1 0; 1 0" dur="1.5s" repeatCount="indefinite" />
+              </linearGradient>
+            </defs>
+            <rect x="20" y="16" width="70" height="14" rx="4" fill="rgba(255,255,255,0.06)" />
+            <rect x="110" y="16" width="130" height="14" rx="4" fill="rgba(255,255,255,0.06)" />
+            <rect x="260" y="16" width="90" height="14" rx="4" fill="rgba(255,255,255,0.06)" />
+            <rect x="370" y="16" width="65" height="14" rx="4" fill="rgba(255,255,255,0.06)" />
+            <rect x="455" y="16" width="110" height="14" rx="4" fill="rgba(255,255,255,0.06)" />
+            <rect x="585" y="16" width="55" height="14" rx="4" fill="rgba(255,255,255,0.06)" />
+            <rect x="660" y="16" width="75" height="14" rx="4" fill="rgba(255,255,255,0.06)" />
+            <rect x="755" y="16" width="140" height="14" rx="4" fill="rgba(255,255,255,0.06)" />
+            <rect x="915" y="16" width="80" height="14" rx="4" fill="rgba(255,255,255,0.06)" />
+            <rect x="1015" y="16" width="60" height="14" rx="4" fill="rgba(255,255,255,0.06)" />
+            <rect x="1095" y="16" width="90" height="14" rx="4" fill="rgba(255,255,255,0.06)" />
+            <rect x="20" y="56" width="70" height="12" rx="4" fill="rgba(255,255,255,0.04)" />
+            <rect x="110" y="56" width="150" height="12" rx="4" fill="rgba(255,255,255,0.04)" />
+            <rect x="280" y="56" width="100" height="12" rx="4" fill="rgba(255,255,255,0.04)" />
+            <rect x="395" y="56" width="55" height="12" rx="4" fill="rgba(255,255,255,0.04)" />
+            <rect x="465" y="56" width="120" height="12" rx="4" fill="rgba(255,255,255,0.04)" />
+            <rect x="600" y="56" width="45" height="12" rx="4" fill="rgba(255,255,255,0.04)" />
+            <rect x="660" y="56" width="80" height="12" rx="4" fill="rgba(255,255,255,0.04)" />
+            <rect x="755" y="56" width="160" height="12" rx="4" fill="rgba(255,255,255,0.04)" />
+            <rect x="930" y="56" width="65" height="12" rx="4" fill="rgba(255,255,255,0.04)" />
+            <rect x="1015" y="56" width="50" height="12" rx="4" fill="rgba(255,255,255,0.04)" />
+            <rect x="1080" y="56" width="100" height="12" rx="4" fill="rgba(255,255,255,0.04)" />
+            <rect x="0" y="0" width="1200" height="420" fill="url(#shimmer)" />
+          </svg>
+        </div>
+        <table id="courseTable">
+          <thead id="courseTableHead">
+            <tr></tr>
+          </thead>
+          <tbody id="courseTableBody"></tbody>
+        </table>
       </div>
-      <table id="courseTable">
-        <thead id="courseTableHead">
-          <tr></tr>
-        </thead>
-        <tbody id="courseTableBody"></tbody>
-      </table>
+    </div>
+
+    <!-- ═══ Schedule Builder Mode ═══ -->
+    <div id="scheduleMode" class="schedule-mode mode-hidden">
+      <!-- Timetable -->
+      <div class="timetable-wrapper glass" id="timetableWrapper">
+        <div class="timetable-header">
+          <h2>برنامه هفتگی</h2>
+        </div>
+        <div class="timetable-scroll">
+          <div class="timetable" id="timetable"></div>
+        </div>
+      </div>
+
+      <!-- Statistics + Selected Courses side by side -->
+      <div class="schedule-info-row">
+        <!-- Statistics -->
+        <div class="schedule-stats glass" id="scheduleStats">
+          <h3>آمار برنامه</h3>
+          <div class="stats-grid" id="statsGrid"></div>
+        </div>
+
+        <!-- Selected Courses -->
+        <div class="selected-courses glass" id="selectedCourses">
+          <h3>دوس انتخاب شده</h3>
+          <div class="selected-list" id="selectedList">
+            <p class="empty-state-small">هنوز درسی اضافه نشده است</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- AI Generator -->
+      <div class="ai-generator glass" id="aiGenerator">
+        <div class="ai-header">
+          <h3>تولید برنامه با هوش مصنوعی</h3>
+          <p class="ai-description">دوس مورد نظر خود را انتخاب کنید و برنامه بهینه دریافت کنید</p>
+        </div>
+
+        <!-- Selected courses for AI -->
+        <div class="ai-course-list" id="aiCourseList">
+          <p class="ai-empty">از جدول زیر دروس مورد نظر خود را انتخاب کنید</p>
+        </div>
+
+        <!-- Goal selector -->
+        <div class="ai-goal-section">
+          <label for="aiGoal">هدف بهینه‌سازی:</label>
+          <select id="aiGoal" class="semester-select">
+            <option value="min-days">کمترین روز حضور</option>
+            <option value="min-gap">کمترین فاصله بین کلاس‌ها</option>
+            <option value="late-start">دیرترین شروع صبح</option>
+            <option value="early-end">زودترین پایان روز</option>
+            <option value="balanced">برنامه متعادل</option>
+          </select>
+        </div>
+
+        <!-- Generate button -->
+        <button id="btnGenerate" class="btn btn-generate">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+          تولید برنامه
+        </button>
+
+        <!-- Loading -->
+        <div class="ai-loading" id="aiLoading" style="display:none">
+          <div class="ai-spinner"></div>
+          <span>در حال تولید برنامه...</span>
+        </div>
+
+        <!-- Error -->
+        <div class="ai-error" id="aiError" style="display:none"></div>
+
+        <!-- Results -->
+        <div class="ai-results" id="aiResults" style="display:none">
+          <div class="ai-tabs" id="aiTabs"></div>
+          <div class="ai-preview" id="aiPreview"></div>
+          <button id="btnLoadSchedule" class="btn btn-load">بارگذاری در برنامه‌ساز</button>
+        </div>
+      </div>
+
+      <!-- Course table -->
+      <div class="schedule-course-table glass">
+        <div class="schedule-table-header">
+          <h2>انتخاب دروس</h2>
+          <span class="schedule-course-count" id="scheduleCourseCount"></span>
+        </div>
+        <div class="table-wrapper" dir="rtl">
+          <table id="scheduleCourseTable">
+            <thead id="scheduleCourseTableHead">
+              <tr></tr>
+            </thead>
+            <tbody id="scheduleCourseTableBody"></tbody>
+          </table>
+        </div>
+      </div>
     </div>
   </div>
 
-  <!-- External Libraries -->
   <!-- Scroll to Top -->
   <button class="scroll-top" id="scrollTop" title="بازگشت به بالا">↑</button>
 
+  <!-- External Libraries -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js"></script>
+  <script src="shared.js"></script>
   <script src="app.js"></script>
+  <script src="schedule.js"></script>
 </body>
 </html>

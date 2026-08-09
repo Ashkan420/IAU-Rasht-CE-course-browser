@@ -791,6 +791,936 @@ body {
 }
 
 /* ========================================
+   Mode Switcher
+   ======================================== */
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.mode-switch {
+  display: flex;
+  gap: 2px;
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: var(--radius-sm);
+  padding: 3px;
+  border: 1px solid var(--glass-border);
+}
+
+.mode-tab {
+  padding: 8px 18px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text-secondary);
+  font-family: inherit;
+  font-size: 0.88rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all var(--transition);
+  white-space: nowrap;
+}
+
+.mode-tab:hover {
+  color: var(--text-primary);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.mode-tab.active {
+  background: var(--accent-dim);
+  color: var(--accent);
+  border-color: rgba(255, 255, 255, 0.15);
+}
+
+:root[data-theme="light"] .mode-switch {
+  background: rgba(0, 0, 0, 0.04);
+}
+
+:root[data-theme="light"] .mode-tab:hover {
+  background: rgba(0, 0, 0, 0.05);
+}
+
+:root[data-theme="light"] .mode-tab.active {
+  background: rgba(0, 0, 0, 0.08);
+  border-color: rgba(0, 0, 0, 0.15);
+}
+
+/* ========================================
+   Mode Visibility
+   ======================================== */
+.mode-hidden {
+  display: none !important;
+}
+
+/* ========================================
+   Schedule Layout
+   ======================================== */
+.schedule-mode {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.schedule-info-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.schedule-course-table {
+  padding: 0;
+  overflow: hidden;
+}
+
+.schedule-table-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px 12px;
+}
+
+.schedule-table-header h2 {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.schedule-course-count {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.schedule-course-table .table-wrapper {
+  max-height: 600px;
+  overflow-y: auto;
+  overflow-x: auto;
+}
+
+/* ========================================
+   Timetable
+   ======================================== */
+.timetable-wrapper {
+  padding: 0;
+  overflow: hidden;
+}
+
+.timetable-header {
+  padding: 16px 20px 12px;
+}
+
+.timetable-header h2 {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.timetable-scroll {
+  overflow-x: auto;
+  padding: 0 16px 16px;
+}
+
+.timetable {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 600px;
+}
+
+.tt-row {
+  display: grid;
+  grid-template-columns: repeat(15, 1fr) 60px;
+  gap: 2px;
+  min-height: 54px;
+  position: relative;
+}
+
+.tt-header {
+  min-height: auto;
+}
+
+.tt-cell {
+  min-height: 100%;
+}
+
+.tt-slot {
+  border-left: 1px solid var(--cell-border);
+  border-bottom: 1px solid var(--cell-border);
+  position: relative;
+}
+
+.tt-slot:nth-child(even) {
+  background: rgba(255, 255, 255, 0.01);
+}
+
+:root[data-theme="light"] .tt-slot:nth-child(even) {
+  background: rgba(0, 0, 0, 0.01);
+}
+
+.tt-hour {
+  text-align: center;
+  font-size: 0.65rem;
+  color: var(--text-muted);
+  padding: 4px 0;
+  border-left: 1px solid var(--cell-border);
+}
+
+.tt-header-day {
+  text-align: center;
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  font-weight: 600;
+}
+
+.tt-day-label {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  background: var(--thead-bg);
+  border-radius: 4px;
+  padding: 4px;
+  white-space: nowrap;
+}
+
+/* Timetable course blocks */
+.tt-block {
+  position: absolute;
+  top: 3px;
+  bottom: 3px;
+  border-radius: 6px;
+  border: 1px solid;
+  padding: 4px 6px;
+  overflow: hidden;
+  cursor: default;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+}
+
+.tt-block:hover {
+  transform: scale(1.02);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+  z-index: 3;
+}
+
+.tt-block-name {
+  font-size: 0.7rem;
+  font-weight: 600;
+  line-height: 1.3;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tt-block-prof {
+  font-size: 0.6rem;
+  opacity: 0.8;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tt-block-time {
+  font-size: 0.6rem;
+  opacity: 0.7;
+  direction: ltr;
+  text-align: center;
+  margin-top: 2px;
+}
+
+/* ========================================
+   Action Buttons (Schedule Table)
+   ======================================== */
+.col-action {
+  text-align: center !important;
+  width: 60px;
+}
+
+.col-ai {
+  text-align: center !important;
+  width: 50px;
+}
+
+.ai-checkbox {
+  width: 18px;
+  height: 18px;
+  accent-color: #818cf8;
+  cursor: pointer;
+}
+
+.btn-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: 1px solid var(--glass-border);
+  border-radius: 8px;
+  background: var(--btn-bg);
+  color: var(--text-secondary);
+  font-size: 1.1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition);
+}
+
+.btn-add-course:hover {
+  background: rgba(52, 211, 153, 0.15);
+  border-color: rgba(52, 211, 153, 0.3);
+  color: #34d399;
+}
+
+.btn-added {
+  background: rgba(52, 211, 153, 0.15);
+  border-color: rgba(52, 211, 153, 0.3);
+  color: #34d399;
+}
+
+.btn-added:hover {
+  background: rgba(239, 68, 68, 0.15);
+  border-color: rgba(239, 68, 68, 0.3);
+  color: var(--danger);
+}
+
+.btn-no-schedule {
+  cursor: default;
+  opacity: 0.3;
+  border-color: transparent;
+  background: transparent;
+}
+
+/* Conflict flash */
+.conflict-flash {
+  animation: conflictPulse 0.5s ease 3;
+}
+
+@keyframes conflictPulse {
+  0%, 100% { background: transparent; }
+  50% { background: rgba(239, 68, 68, 0.15); }
+}
+
+/* ========================================
+   Selected Courses
+   ======================================== */
+.selected-courses {
+  padding: 16px 20px;
+}
+
+.selected-courses h3,
+.schedule-stats h3 {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 12px;
+}
+
+.selected-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.selected-card {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 14px;
+  background: var(--btn-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-sm);
+  transition: border-color var(--transition), background var(--transition);
+}
+
+.selected-card:hover {
+  background: var(--btn-hover);
+  border-color: var(--btn-hover-border);
+}
+
+.selected-card:hover {
+  border-color: var(--btn-hover-border);
+}
+
+.selected-card-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.selected-card-name {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 2px;
+}
+
+.selected-card-prof {
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+}
+
+.selected-card-schedule {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  margin-top: 4px;
+}
+
+.selected-card-actions {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.btn-sm {
+  padding: 5px 10px;
+  font-size: 0.75rem;
+  border-radius: 6px;
+}
+
+.btn-change {
+  background: rgba(129, 140, 248, 0.12);
+  border-color: rgba(129, 140, 248, 0.25);
+  color: #a5b4fc;
+}
+
+.btn-change:hover {
+  background: rgba(129, 140, 248, 0.22);
+}
+
+.btn-remove {
+  background: rgba(239, 68, 68, 0.1);
+  border-color: rgba(239, 68, 68, 0.25);
+  color: var(--danger);
+}
+
+.btn-remove:hover {
+  background: rgba(239, 68, 68, 0.2);
+}
+
+/* ========================================
+   Statistics
+   ======================================== */
+.schedule-stats {
+  padding: 16px 20px;
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+.stat-card {
+  text-align: center;
+  padding: 10px 8px;
+  background: var(--btn-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-sm);
+}
+
+.stat-value {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--accent);
+  direction: ltr;
+}
+
+.stat-label {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+.empty-state-small {
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  padding: 20px;
+}
+
+/* ========================================
+   Toast Notifications
+   ======================================== */
+.toast {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%) translateY(20px);
+  padding: 10px 20px;
+  border-radius: var(--radius-sm);
+  font-size: 0.85rem;
+  font-weight: 500;
+  z-index: 1000;
+  opacity: 0;
+  transition: opacity 0.3s ease, transform 0.3s ease;
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+.toast-visible {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+.toast-error {
+  background: rgba(239, 68, 68, 0.9);
+  color: #fff;
+  border: 1px solid rgba(239, 68, 68, 0.5);
+}
+
+.toast-warning {
+  background: rgba(251, 191, 36, 0.9);
+  color: #1a1a1a;
+  border: 1px solid rgba(251, 191, 36, 0.5);
+}
+
+.toast-info {
+  background: rgba(129, 140, 248, 0.9);
+  color: #fff;
+  border: 1px solid rgba(129, 140, 248, 0.5);
+}
+
+/* ========================================
+   Group Picker Modal
+   ======================================== */
+.group-picker-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 500;
+  padding: 20px;
+}
+
+.group-picker {
+  width: 100%;
+  max-width: 500px;
+  max-height: 80vh;
+  overflow-y: auto;
+  padding: 0;
+}
+
+.group-picker-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--glass-border);
+}
+
+.group-picker-header h3 {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.group-picker-close {
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 1.4rem;
+  cursor: pointer;
+  padding: 0 4px;
+  line-height: 1;
+  transition: color var(--transition);
+}
+
+.group-picker-close:hover {
+  color: var(--text-primary);
+}
+
+.group-picker-list {
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.group-picker-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 14px;
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-sm);
+  background: var(--btn-bg);
+  transition: border-color var(--transition);
+}
+
+.group-picker-item:hover {
+  border-color: var(--btn-hover-border);
+}
+
+.group-picker-item.current {
+  border-color: rgba(52, 211, 153, 0.3);
+  background: rgba(52, 211, 153, 0.08);
+}
+
+.group-picker-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+}
+
+.group-label {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  font-weight: 600;
+}
+
+.group-schedule {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.btn-select {
+  flex-shrink: 0;
+  padding: 6px 14px;
+  background: rgba(129, 140, 248, 0.15);
+  border-color: rgba(129, 140, 248, 0.3);
+  color: #a5b4fc;
+}
+
+.btn-select:hover {
+  background: rgba(129, 140, 248, 0.25);
+}
+
+/* ========================================
+   Schedule Responsive
+   ======================================== */
+@media (max-width: 900px) {
+  .schedule-info-row {
+    grid-template-columns: 1fr;
+  }
+
+  .stats-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .ai-goal-section {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .ai-goal-section select {
+    max-width: 100%;
+  }
+}
+
+@media (max-width: 600px) {
+  .mode-switch {
+    width: 100%;
+  }
+
+  .mode-tab {
+    flex: 1;
+    padding: 8px 10px;
+    font-size: 0.8rem;
+    text-align: center;
+  }
+
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .selected-card {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .selected-card-actions {
+    width: 100%;
+    justify-content: flex-end;
+  }
+
+  .tt-block-name { font-size: 0.6rem; }
+  .tt-block-prof { display: none; }
+  .tt-block-time { font-size: 0.55rem; }
+
+  .tt-day-label {
+    font-size: 0.6rem;
+    min-width: 40px;
+  }
+
+  .tt-hour {
+    font-size: 0.55rem;
+  }
+
+  .schedule-course-table .table-wrapper {
+    max-height: 400px;
+  }
+
+  .schedule-course-table .table-wrapper table {
+    font-size: 0.75rem;
+  }
+
+  .schedule-course-table .table-wrapper th,
+  .schedule-course-table .table-wrapper td {
+    padding: 8px 6px;
+    font-size: 0.72rem;
+  }
+
+  .ai-generator {
+    padding: 16px;
+  }
+
+  .btn-generate,
+  .btn-load {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .ai-tabs {
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    padding-bottom: 4px;
+  }
+
+  .ai-tab {
+    flex-shrink: 0;
+  }
+}
+
+/* ========================================
+   AI Generator
+   ======================================== */
+.ai-generator {
+  padding: 20px 24px;
+}
+
+.ai-header h3 {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 4px;
+}
+
+.ai-description {
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  margin-bottom: 16px;
+}
+
+.ai-goal-section {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.ai-goal-section label {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.ai-goal-section select {
+  flex: 1;
+  max-width: 300px;
+}
+
+.btn-generate {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 24px;
+  background: rgba(129, 140, 248, 0.15);
+  border-color: rgba(129, 140, 248, 0.3);
+  color: #a5b4fc;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.btn-generate:hover {
+  background: rgba(129, 140, 248, 0.25);
+  border-color: rgba(129, 140, 248, 0.5);
+}
+
+.btn-generate:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-load {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 24px;
+  background: rgba(52, 211, 153, 0.15);
+  border-color: rgba(52, 211, 153, 0.3);
+  color: #34d399;
+  font-weight: 600;
+  font-size: 0.9rem;
+  margin-top: 12px;
+}
+
+.btn-load:hover {
+  background: rgba(52, 211, 153, 0.25);
+  border-color: rgba(52, 211, 153, 0.5);
+}
+
+/* AI Loading */
+.ai-loading {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 0;
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+}
+
+.ai-spinner {
+  width: 24px;
+  height: 24px;
+  border: 3px solid var(--glass-border);
+  border-top-color: #a5b4fc;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+/* AI Error */
+.ai-error {
+  padding: 12px 16px;
+  border-radius: var(--radius-sm);
+  background: rgba(239, 68, 68, 0.12);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  color: #fca5a5;
+  font-size: 0.85rem;
+  margin-top: 12px;
+}
+
+/* AI Results Tabs */
+.ai-results {
+  margin-top: 16px;
+}
+
+.ai-tabs {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+
+.ai-tab {
+  padding: 8px 16px;
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-sm);
+  background: var(--btn-bg);
+  color: var(--text-secondary);
+  font-family: inherit;
+  font-size: 0.82rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all var(--transition);
+}
+
+.ai-tab:hover {
+  background: var(--btn-hover);
+  border-color: var(--btn-hover-border);
+}
+
+.ai-tab.active {
+  background: rgba(129, 140, 248, 0.15);
+  border-color: rgba(129, 140, 248, 0.3);
+  color: #a5b4fc;
+}
+
+/* AI Preview Timetable (compact) */
+.ai-preview {
+  background: var(--btn-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-sm);
+  padding: 12px;
+  overflow-x: auto;
+}
+
+.ai-preview .timetable {
+  min-width: 500px;
+}
+
+.ai-preview .tt-block {
+  font-size: 0.6rem;
+}
+
+.ai-preview .tt-block-name {
+  font-size: 0.6rem;
+}
+
+.ai-preview .tt-block-prof {
+  display: none;
+}
+
+.ai-preview .tt-block-time {
+  font-size: 0.55rem;
+}
+
+.ai-preview .tt-hour {
+  font-size: 0.55rem;
+}
+
+.ai-preview .tt-day-label {
+  font-size: 0.65rem;
+  padding: 2px;
+}
+
+/* AI Course List */
+.ai-course-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 16px;
+}
+
+.ai-course-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border-radius: 16px;
+  background: var(--chip-bg);
+  border: 1px solid var(--chip-border);
+  color: var(--accent);
+  font-size: 0.78rem;
+  font-weight: 500;
+}
+
+.ai-course-tag .tag-remove {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  border: none;
+  border-radius: 50%;
+  background: rgba(248, 113, 113, 0.15);
+  color: var(--danger);
+  font-size: 0.65rem;
+  cursor: pointer;
+  line-height: 1;
+}
+
+.ai-empty {
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 0.82rem;
+  padding: 12px;
+}
+
+/* ========================================
    Print Styles
    ======================================== */
 @media print {
