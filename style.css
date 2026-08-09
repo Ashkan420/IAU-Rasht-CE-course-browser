@@ -816,6 +816,25 @@ body {
     -webkit-user-select: text;
   }
 
+  table, thead, tbody, tr, th, td {
+    direction: rtl;
+    unicode-bidi: plaintext;
+  }
+
+  th, td {
+    text-align: right;
+  }
+
+  th {
+    text-align: center;
+  }
+
+  td.code, td.num {
+    direction: ltr;
+    unicode-bidi: isolate;
+    text-align: center;
+  }
+
   .container { max-width: 100%; padding: 0; margin: 0; }
 
   .header, .filter-bar, .search-area, .active-filters,

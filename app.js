@@ -470,7 +470,8 @@
   function exportPdf() {
     if (!filteredCourses.length) return;
 
-    // Temporarily hide unwanted columns by index
+    // Temporarily hide unwanted columns and mark number columns for LTR
+    const PDF_NUM_COLS = new Set(['کد درس', 'کد ارائه', 'ظرفیت', 'کد گروه آموزشی']);
     const hiddenCells = [];
     $$('.table-wrapper th, .table-wrapper td').forEach((el) => {
       const colIndex = Array.from(el.parentElement.children).indexOf(el);
@@ -479,14 +480,18 @@
         el.style.display = 'none';
         hiddenCells.push(el);
       }
+      if (PDF_NUM_COLS.has(colName)) {
+        el.classList.add('code');
+      }
     });
 
     document.body.classList.add('printing');
     window.print();
     setTimeout(() => {
       document.body.classList.remove('printing');
-      // Restore hidden cells
+      // Restore hidden cells and remove code classes
       hiddenCells.forEach((el) => { el.style.display = ''; });
+      $$('.table-wrapper .code').forEach((el) => { el.classList.remove('code'); });
     }, 1000);
   }
 
