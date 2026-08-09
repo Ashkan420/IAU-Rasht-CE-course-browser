@@ -854,7 +854,8 @@ body {
     font-weight: 700;
     font-size: 7px;
     text-align: center;
-    border-bottom: 2px solid #333;
+    border-bottom: 2px solid #444;
+    border-left: 1px solid #555;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -865,14 +866,16 @@ body {
   .table-wrapper td {
     padding: 4px 5px;
     border-bottom: 1px solid #e0e0e0;
+    border-left: 1px solid #eee;
     color: #1a1a1a;
     font-size: 7.5px;
     white-space: normal;
     word-wrap: break-word;
     overflow-wrap: break-word;
+    hyphens: auto;
     user-select: text;
     -webkit-user-select: text;
-    vertical-align: top;
+    vertical-align: middle;
   }
 
   .table-wrapper tbody tr:nth-child(even) {
