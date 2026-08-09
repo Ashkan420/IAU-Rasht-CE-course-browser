@@ -841,7 +841,7 @@ body {
     width: 100%;
     border-collapse: collapse;
     font-size: 8px;
-    table-layout: fixed;
+    table-layout: auto;
   }
 
   .table-wrapper thead {
@@ -849,10 +849,10 @@ body {
   }
 
   .table-wrapper th {
-    padding: 6px 8px;
+    padding: 5px 6px;
     color: #fff;
     font-weight: 700;
-    font-size: 7.5px;
+    font-size: 7px;
     text-align: center;
     border-bottom: 2px solid #333;
     white-space: nowrap;
@@ -862,28 +862,17 @@ body {
     -webkit-user-select: text;
   }
 
-  /* Column widths for print */
-  .table-wrapper th:nth-child(1) { width: 7%; }   /* کد درس */
-  .table-wrapper th:nth-child(2) { width: 10%; }  /* نام درس */
-  .table-wrapper th:nth-child(3) { width: 8%; }   /* نام استاد */
-  .table-wrapper th:nth-child(4) { width: 6%; }   /* نوع درس */
-  .table-wrapper th:nth-child(5) { width: 4%; }   /* ظرفیت */
-  .table-wrapper th:nth-child(6) { width: 7%; }   /* نوع واحد */
-  .table-wrapper th:nth-child(7) { width: 4%; }   /* جنسیت */
-  .table-wrapper th:nth-child(8) { width: 22%; }  /* زمانبندی */
-  .table-wrapper th:nth-child(9) { width: 6%; }   /* مقطع ارائه */
-  .table-wrapper th:nth-child(10) { width: 20%; } /* مکان برگزاری */
-  .table-wrapper th:nth-child(11) { width: 10%; } /* نام کلاس */
-  .table-wrapper th:nth-child(12) { width: 6%; }  /* کد ارائه */
-
   .table-wrapper td {
-    padding: 4px 6px;
+    padding: 4px 5px;
     border-bottom: 1px solid #e0e0e0;
     color: #1a1a1a;
-    font-size: 8px;
-    overflow: hidden;
+    font-size: 7.5px;
+    white-space: normal;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
     user-select: text;
     -webkit-user-select: text;
+    vertical-align: top;
   }
 
   .table-wrapper tbody tr:nth-child(even) {
