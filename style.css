@@ -791,6 +791,89 @@ body {
 }
 
 /* ========================================
+   Print Styles
+   ======================================== */
+@media print {
+  * { box-sizing: border-box; }
+
+  body {
+    background: #fff !important;
+    color: #1a1a1a !important;
+    direction: rtl;
+    font-size: 10px;
+    line-height: 1.4;
+    margin: 0;
+    padding: 0;
+  }
+
+  .container { max-width: 100%; padding: 0; margin: 0; }
+
+  .header, .filter-bar, .search-area, .active-filters,
+  .results-bar, .error-banner, .scroll-top,
+  .btn-add, .btn-clear, .btn-export, .theme-toggle,
+  .semester-select, .update-date, .skip-link,
+  .gender-filter, .semester-select { display: none !important; }
+
+  .table-wrapper {
+    background: none !important;
+    backdrop-filter: none !important;
+    box-shadow: none !important;
+    border: none !important;
+    border-radius: 0 !important;
+    overflow: visible !important;
+    padding: 0 !important;
+    height: auto !important;
+  }
+
+  .table-wrapper table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 9px;
+  }
+
+  .table-wrapper thead {
+    background: #404040 !important;
+  }
+
+  .table-wrapper th {
+    padding: 8px 10px;
+    color: #fff;
+    font-weight: 700;
+    font-size: 8px;
+    text-align: center;
+    border-bottom: 2px solid #333;
+    white-space: nowrap;
+  }
+
+  .table-wrapper td {
+    padding: 5px 8px;
+    border-bottom: 1px solid #e0e0e0;
+    color: #1a1a1a;
+    font-size: 8px;
+    white-space: nowrap;
+  }
+
+  .table-wrapper tbody tr:nth-child(even) {
+    background: #f5f5f5 !important;
+  }
+
+  .table-wrapper tbody tr:nth-child(odd) {
+    background: #fff !important;
+  }
+
+  .badge {
+    border: none !important;
+    background: none !important;
+    padding: 0 !important;
+    font-weight: 600;
+    font-size: 8px;
+  }
+
+  .col-long { max-width: none; }
+  .col-center { text-align: center !important; }
+}
+
+/* ========================================
    Responsive
    ======================================== */
 @media (max-width: 900px) {

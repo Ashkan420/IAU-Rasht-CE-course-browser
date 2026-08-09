@@ -463,38 +463,12 @@
     if (btn) btn.classList.remove('visible');
   }
 
-  // ── Export: PDF ────────────────────────────────────────────────
+  // ── Export: PDF (Browser Print) ─────────────────────────────────
   function exportPdf() {
     if (!filteredCourses.length) return;
-    const { jsPDF } = window.jspdf;
-    const doc = new jsPDF({ orientation: 'l', unit: 'pt', format: 'a4' });
-
-    // Build an HTML table so the browser renders Vazirmatn (Persian) natively
-    const headerRow = tableColumns.map((col) => `<th style="padding:8px 12px;background:#1e1e1e;color:#fff;font-weight:bold;border:1px solid #333;font-size:9px;">${esc(col)}</th>`).join('');
-    const bodyRows = filteredCourses.map((c) => {
-      const cells = tableColumns.map((col) => `<td style="padding:6px 10px;border:1px solid #ddd;font-size:8px;">${esc(c[col] || '')}</td>`).join('');
-      return `<tr>${cells}</tr>`;
-    }).join('');
-
-    const html = `
-      <div dir="rtl" style="font-family:Vazirmatn,sans-serif;padding:20px;">
-        <h2 style="font-size:16px;margin-bottom:4px;">لیست دروس</h2>
-        <p style="font-size:10px;color:#888;margin-bottom:16px;">${filteredCourses.length.toLocaleString('fa-IR')} نتیجه</p>
-        <table style="width:100%;border-collapse:collapse;">
-          <thead><tr>${headerRow}</tr></thead>
-          <tbody>${bodyRows.join('')}</tbody>
-        </table>
-      </div>`;
-
-    doc.html(html, {
-      callback: function (doc) {
-        doc.save('courses.pdf');
-      },
-      x: 10,
-      y: 10,
-      width: 820,
-      windowWidth: 1100,
-    });
+    document.body.classList.add('printing');
+    window.print();
+    setTimeout(() => document.body.classList.remove('printing'), 1000);
   }
 
   // ── Export: XLSX (ExcelJS) ─────────────────────────────────────
