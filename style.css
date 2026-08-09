@@ -732,6 +732,12 @@ body {
   max-width: 200px;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+/* Short value columns — center aligned */
+.col-center {
+  text-align: center;
+}
   white-space: nowrap;
 }
 

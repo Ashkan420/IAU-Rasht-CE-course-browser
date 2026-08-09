@@ -18,7 +18,12 @@
   // Columns that get truncated with ellipsis
   const LONG_COLS = new Set([
     'نام درس', 'نام استاد', 'زمانبندی تشکیل کلاس',
-    'نام کلاس درس', 'مکان برگزاری', 'نام گروه آموزشی'
+    'نام کلاس', 'مکان برگزاری', 'نام گروه آموزشی'
+  ]);
+
+  // Columns that should be center-aligned (short values)
+  const CENTER_COLS = new Set([
+    'نوع درس', 'نوع واحد', 'جنسیت', 'ظرفیت', 'مقطع ارائه'
   ]);
 
   // ── DOM refs ───────────────────────────────────────────────────
@@ -156,6 +161,7 @@
       th.setAttribute('tabindex', '0');
       th.setAttribute('role', 'columnheader');
       if (LONG_COLS.has(col)) th.classList.add('col-long');
+      if (CENTER_COLS.has(col)) th.classList.add('col-center');
       const arrow = document.createElement('span');
       arrow.className = 'sort-arrow';
       th.appendChild(arrow);
@@ -197,7 +203,7 @@
     if (currentCategory !== 'تخصصی' && currentGender !== 'همه') {
       result = result.filter((c) => {
         const gender = (c['جنسیت'] || '').trim();
-        const className = (c['نام کلاس درس'] || '').trim();
+        const className = (c['نام کلاس'] || '').trim();
         const unitType = (c['نوع واحد'] || '').trim();
 
         // Always include تخصصی courses (they have no gender assignment)
@@ -289,7 +295,7 @@
     const rows = filteredCourses.map((c) => {
       const cells = tableColumns.map((col) => {
         let val = c[col] || '';
-        const cls = LONG_COLS.has(col) ? ' class="col-long"' : '';
+        const cls = LONG_COLS.has(col) ? ' class="col-long"' : CENTER_COLS.has(col) ? ' class="col-center"' : '';
         const title = LONG_COLS.has(col) ? ` title="${escAttr(val)}"` : '';
         // Badge for نوع واحد
         if (col === 'نوع واحد') {
