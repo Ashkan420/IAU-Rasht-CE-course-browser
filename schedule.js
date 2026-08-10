@@ -69,26 +69,25 @@
 
     var html = '';
 
-    // Time header row — reversed: 21:00 on left, 07:00 on right
-    // Each hour label spans 4 quarter-cells
+    // Header row: day label first, then hours left→right (07→21)
     html += '<div class="tt-row tt-header">';
+    html += '<div class="tt-cell tt-day-label tt-header-day">روز</div>';
     for (var hi = 0; hi < HOURS_COUNT; hi++) {
-      var hour = HOURS_END - 1 - hi; // 21, 20, 19, ..., 07
+      var hour = HOURS_START + hi;
       html += '<div class="tt-cell tt-hour" style="grid-column:span 4">' + S.minutesToTime(hour * 60) + '</div>';
     }
-    html += '<div class="tt-cell tt-day-label tt-header-day">روز</div>';
     html += '</div>';
 
-    // Day rows — 60 quarter-cells for precise positioning
+    // Day rows: day label first, then 60 quarter-cells
     S.DAY_ORDER.forEach(function (day) {
       html += '<div class="tt-row" data-day="' + day + '">';
+      html += '<div class="tt-cell tt-day-label">' + day + '</div>';
       for (var q = 0; q < QUARTER_COLS; q++) {
         var cls = 'tt-cell tt-slot';
         if (q % 4 === 0) cls += ' tt-hour-mark';
         else if (q % 4 === 2) cls += ' tt-half-mark';
         html += '<div class="' + cls + '"></div>';
       }
-      html += '<div class="tt-cell tt-day-label">' + day + '</div>';
       html += '</div>';
     });
 
@@ -133,7 +132,7 @@
 
         var name = esc(course['نام درس']);
         var prof = esc(course['نام استاد']);
-        var time = slot.start + ' – ' + slot.end;
+        var time = slot.end + ' – ' + slot.start;
 
         block.innerHTML =
           '<span class="tt-block-name">' + name + '</span>' +

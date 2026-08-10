@@ -929,7 +929,7 @@ body {
 
 .tt-row {
   display: grid;
-  grid-template-columns: repeat(60, 1fr) 60px;
+  grid-template-columns: 60px repeat(60, 1fr);
   gap: 0;
   min-height: 70px;
   position: relative;
