@@ -863,8 +863,8 @@ body {
 }
 
 .schedule-info-row {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
+  display: flex;
+  flex-direction: column;
   gap: 16px;
 }
 
@@ -1179,6 +1179,12 @@ body {
 
 .selected-list {
   overflow-x: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.selected-list::-webkit-scrollbar {
+  display: none;
 }
 
 .selected-table {
@@ -1258,7 +1264,7 @@ body {
 
 .stats-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(6, 1fr);
   gap: 8px;
 }
 
@@ -1449,10 +1455,6 @@ body {
    Schedule Responsive
    ======================================== */
 @media (max-width: 900px) {
-  .schedule-info-row {
-    grid-template-columns: 1fr;
-  }
-
   .stats-grid {
     grid-template-columns: repeat(3, 1fr);
   }

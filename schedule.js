@@ -523,6 +523,17 @@
       });
     });
 
+    // Sort each day's courses by earliest start time on that day
+    S.DAY_ORDER.forEach(function (day) {
+      dayGroups[day].sort(function (a, b) {
+        var aSlots = S.parseSchedule(a['زمانبندی تشکیل کلاس']).filter(function (s) { return s.day === day; });
+        var bSlots = S.parseSchedule(b['زمانبندی تشکیل کلاس']).filter(function (s) { return s.day === day; });
+        var aStart = aSlots.length ? S.timeToMinutes(aSlots[0].start) : 9999;
+        var bStart = bSlots.length ? S.timeToMinutes(bSlots[0].start) : 9999;
+        return aStart - bStart;
+      });
+    });
+
     var html = '<table class="selected-table"><thead><tr>';
     html += '<th>روز</th><th>نام درس</th><th>استاد</th><th>زمان</th><th>عملیات</th>';
     html += '</tr></thead><tbody>';
