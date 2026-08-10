@@ -1008,7 +1008,7 @@ body {
   top: 0;
   bottom: 0;
   left: 0;
-  right: 32px;
+  right: 0;
   pointer-events: none;
 }
 
@@ -1039,6 +1039,36 @@ body {
     rgba(0,0,0,0.04) 6px
   );
   border-color: rgba(0,0,0,0.08);
+}
+
+/* Green hatched connector for multi-section ghost blocks */
+.tt-hatch-green {
+  position: absolute;
+  top: 8px;
+  bottom: 8px;
+  border-radius: 3px;
+  background: repeating-linear-gradient(
+    -45deg,
+    transparent,
+    transparent 3px,
+    rgba(52,211,153,0.12) 3px,
+    rgba(52,211,153,0.12) 6px
+  );
+  border-top: 1px dashed rgba(52,211,153,0.3);
+  border-bottom: 1px dashed rgba(52,211,153,0.3);
+  pointer-events: none;
+  z-index: 1;
+}
+
+:root[data-theme="light"] .tt-hatch-green {
+  background: repeating-linear-gradient(
+    -45deg,
+    transparent,
+    transparent 3px,
+    rgba(52,211,153,0.1) 3px,
+    rgba(52,211,153,0.1) 6px
+  );
+  border-color: rgba(52,211,153,0.25);
 }
 
 /* Timetable course blocks */
@@ -1088,6 +1118,170 @@ body {
 
 .tt-block-time {
   display: none;
+}
+
+/* ========================================
+   Interactive Edit Mode
+   ======================================== */
+.tt-block.clickable {
+  cursor: pointer;
+  pointer-events: auto;
+}
+
+/* Delete button on selected block — small rounded square on corner */
+.tt-block-delete {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 16px;
+  height: 16px;
+  border-radius: 4px;
+  border: none;
+  background: var(--danger);
+  color: #fff;
+  font-size: 0.6rem;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+  line-height: 1;
+  pointer-events: auto;
+  padding: 0;
+}
+
+.tt-block:hover .tt-block-delete,
+.tt-block-selected .tt-block-delete {
+  opacity: 1;
+}
+
+.tt-block-delete:hover {
+  background: var(--danger-hover);
+}
+
+/* Dimmed state for non-selected blocks */
+.tt-block-dimmed {
+  opacity: 0.15 !important;
+  pointer-events: none;
+  transition: opacity 0.25s ease;
+}
+
+/* Selected block highlight */
+.tt-block-selected {
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.4), 0 2px 12px rgba(0, 0, 0, 0.3);
+  z-index: 5 !important;
+  transform: none;
+  pointer-events: auto;
+}
+
+:root[data-theme="light"] .tt-block-selected {
+  box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.25), 0 2px 12px rgba(0, 0, 0, 0.12);
+}
+
+/* Paired course highlight */
+.tt-block-paired {
+  box-shadow: 0 0 0 2px rgba(251, 191, 36, 0.6), 0 2px 8px rgba(251, 191, 36, 0.2) !important;
+  z-index: 4 !important;
+  transform: none;
+  pointer-events: auto;
+}
+
+/* Ghost blocks (available slots) */
+.tt-ghost {
+  position: absolute;
+  top: 3px;
+  bottom: 3px;
+  border-radius: 6px;
+  border: 2px dashed;
+  z-index: 1;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+  pointer-events: auto;
+  overflow: hidden;
+}
+
+.tt-ghost-available {
+  border-color: rgba(52, 211, 153, 0.45);
+  background: rgba(52, 211, 153, 0.06);
+}
+
+.tt-ghost-available:hover {
+  background: rgba(52, 211, 153, 0.22);
+  border-color: rgba(52, 211, 153, 0.8);
+  box-shadow: 0 0 14px rgba(52, 211, 153, 0.3);
+}
+
+.tt-ghost-conflict {
+  border-color: rgba(239, 68, 68, 0.45);
+  background: rgba(239, 68, 68, 0.06);
+}
+
+.tt-ghost-conflict:hover {
+  background: rgba(239, 68, 68, 0.22);
+  border-color: rgba(239, 68, 68, 0.8);
+  box-shadow: 0 0 14px rgba(239, 68, 68, 0.3);
+  animation: ghostConflictPulse 1.2s ease infinite;
+}
+
+/* Ghost group hover — highlights all same-section ghosts on same day */
+.tt-ghost-hover {
+  border-color: rgba(52, 211, 153, 0.8) !important;
+  background: rgba(52, 211, 153, 0.2) !important;
+  box-shadow: 0 0 12px rgba(52, 211, 153, 0.3) !important;
+}
+
+@keyframes ghostConflictPulse {
+  0%, 100% { box-shadow: 0 0 14px rgba(239, 68, 68, 0.3); }
+  50% { box-shadow: 0 0 22px rgba(239, 68, 68, 0.5); }
+}
+
+/* Ghost block label (instructor name) */
+.tt-ghost-label {
+  position: absolute;
+  bottom: 2px;
+  left: 0;
+  right: 0;
+  text-align: center;
+  font-size: 0.55rem;
+  color: var(--text-muted);
+  pointer-events: none;
+  direction: rtl;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  padding: 0 2px;
+}
+
+/* Conflict tooltip on ghost hover */
+.tt-ghost-tooltip {
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 4px 10px;
+  border-radius: 6px;
+  background: rgba(239, 68, 68, 0.92);
+  color: #fff;
+  font-size: 0.65rem;
+  font-weight: 500;
+  white-space: nowrap;
+  pointer-events: none;
+  z-index: 20;
+  direction: rtl;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.tt-ghost-tooltip::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 5px solid transparent;
+  border-top-color: rgba(239, 68, 68, 0.92);
 }
 
 /* ========================================

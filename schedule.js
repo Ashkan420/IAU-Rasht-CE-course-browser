@@ -40,6 +40,12 @@
   var colorMap = {};         // courseCode -> color index
   var nextColor = 0;
 
+  // ── Edit Mode State ────────────────────────────────────────────
+  var editMode = false;
+  var editCourseCode = null;      // Course code being edited
+  var editPairedCode = null;      // Paired course code (حل تمرین etc.)
+  var editCurrentSection = null;  // Currently selected section object
+
   // ── Indexing ───────────────────────────────────────────────────
   function buildIndex() {
     courseCodeIndex = {};
@@ -99,8 +105,8 @@
     var timetable = $('#timetable');
     if (!timetable) return;
 
-    // Remove old blocks and hatches
-    timetable.querySelectorAll('.tt-block, .tt-hatch').forEach(function (el) { el.remove(); });
+    // Remove old blocks, hatches, ghost blocks, and green hatches
+    timetable.querySelectorAll('.tt-block, .tt-hatch, .tt-ghost, .tt-hatch-green').forEach(function (el) { el.remove(); });
 
     var totalMin = HOURS_COUNT * 60;
     var gridEndMin = HOURS_END * 60; // 22:00 in absolute minutes
@@ -122,6 +128,7 @@
       var sectionCode = course['کد ارائه'];
       var name = esc(course['نام درس']);
       var prof = esc(course['نام استاد']);
+      var isEditedCourse = editMode && course['کد درس'] === editCourseCode;
 
       // Group slots by day for hatch rendering
       var slotsByDay = {};
@@ -156,6 +163,7 @@
           block.style.borderColor = color.border;
           block.style.color = color.text;
           block.dataset.section = sectionCode;
+          block.dataset.course = course['کد درس'];
 
           block.title = slot.start + ' – ' + slot.end;
           block.innerHTML =
@@ -167,6 +175,41 @@
           var profSize = Math.min(0.65, Math.max(0.5, 0.5 + dur / 300 * 0.15));
           block.querySelector('.tt-block-name').style.fontSize = nameSize + 'rem';
           block.querySelector('.tt-block-prof').style.fontSize = profSize + 'rem';
+
+          // ── Edit mode styling ──
+          if (editMode) {
+            var isPairedToEdited = editPairedCode && course['کد درس'] === editPairedCode;
+            if (isEditedCourse) {
+              block.classList.add('tt-block-selected');
+              // Add delete button
+              var delBtn = document.createElement('button');
+              delBtn.className = 'tt-block-delete';
+              delBtn.textContent = '×';
+              delBtn.title = 'حذف از برنامه';
+              delBtn.addEventListener('click', function (e) {
+                e.stopPropagation();
+                removeCourse(course['کد ارائه']);
+              });
+              block.appendChild(delBtn);
+            } else if (isPairedToEdited) {
+              // Paired course block — green accent, clickable to enter its own edit mode
+              block.classList.add('clickable');
+              block.style.background = 'rgba(52, 211, 153, 0.25)';
+              block.style.borderColor = 'rgba(52, 211, 153, 0.5)';
+              block.style.color = '#6ee7b7';
+              block.addEventListener('click', function () {
+                enterEditMode(course['کد درس']);
+              });
+            } else {
+              block.classList.add('tt-block-dimmed');
+            }
+          } else {
+            // Not in edit mode — clickable to enter edit mode
+            block.classList.add('clickable');
+            block.addEventListener('click', function () {
+              enterEditMode(course['کد درس']);
+            });
+          }
 
           overlay.appendChild(block);
         });
@@ -182,11 +225,19 @@
             hatch.className = 'tt-hatch';
             hatch.style.left = rtlLeftPct(gapEnd) + '%';
             hatch.style.width = widthPct(gapDuration) + '%';
+            if (editMode && !isEditedCourse) {
+              hatch.style.opacity = '0.15';
+            }
             overlay.appendChild(hatch);
           }
         }
       });
     });
+
+    // If in edit mode, render ghost blocks (green hatches render inside)
+    if (editMode) {
+      renderGhostBlocks();
+    }
   }
 
   // ── Conflict detection ─────────────────────────────────────────
@@ -226,6 +277,391 @@
     });
     if (pairs.length === 0) return null;
     return pairs[0];
+  }
+
+  // ── Edit Mode (click-to-swap) ──────────────────────────────────
+  function enterEditMode(courseCode) {
+    var current = null;
+    for (var i = 0; i < selectedSections.length; i++) {
+      if (selectedSections[i]['کد درس'] === courseCode) {
+        current = selectedSections[i];
+        break;
+      }
+    }
+    if (!current) return;
+
+    var paired = findPairedCourse(current);
+    if (paired && !hasSchedule(paired)) paired = null;
+
+    editMode = true;
+    editCourseCode = courseCode;
+    editCurrentSection = current;
+    editPairedCode = paired ? paired['کد درس'] : null;
+
+    renderTimetableBlocks();
+  }
+
+  function exitEditMode() {
+    editMode = false;
+    editCourseCode = null;
+    editPairedCode = null;
+    editCurrentSection = null;
+    renderTimetableBlocks();
+  }
+
+  function checkGhostConflict(section, slot) {
+    var startMin = S.timeToMinutes(slot.start);
+    var endMin = S.timeToMinutes(slot.end);
+
+    for (var i = 0; i < selectedSections.length; i++) {
+      var existing = selectedSections[i];
+      if (existing['کد درس'] === editCourseCode) continue;
+      if (editPairedCode && existing['کد درس'] === editPairedCode) continue;
+
+      var existSlots = S.parseSchedule(existing['زمانبندی تشکیل کلاس']);
+      for (var j = 0; j < existSlots.length; j++) {
+        if (existSlots[j].day === slot.day) {
+          var existStart = S.timeToMinutes(existSlots[j].start);
+          var existEnd = S.timeToMinutes(existSlots[j].end);
+          if (startMin < existEnd && existStart < endMin) {
+            return existing;
+          }
+        }
+      }
+    }
+    return null;
+  }
+
+  function computeAvailableSlots() {
+    if (!editMode || !editCourseCode) return [];
+
+    var sections = courseCodeIndex[editCourseCode] || [];
+    var currentGender = S.currentGender;
+
+    // Alternative sections of the main course (not the current one)
+    var alternatives = sections.filter(function (s) {
+      return s['کد ارائه'] !== editCurrentSection['کد ارائه'];
+    });
+
+    // For عمومی courses, filter by gender
+    if (editCurrentSection['نوع واحد'] === 'عمومی' && currentGender && currentGender !== 'همه') {
+      alternatives = alternatives.filter(function (s) {
+        var gender = (s['جنسیت'] || '').trim();
+        var className = (s['نام کلاس'] || '').trim();
+        if (currentGender === 'خواهران') {
+          return gender === 'زن' || className.includes('خواهران');
+        }
+        if (currentGender === 'برادران') {
+          return gender === 'مرد' || className.includes('برادران');
+        }
+        return true;
+      });
+    }
+
+    // Paired course alternatives
+    var pairedAlternatives = [];
+    if (editPairedCode) {
+      var pairedSections = courseCodeIndex[editPairedCode] || [];
+      var currentPaired = null;
+      for (var i = 0; i < selectedSections.length; i++) {
+        if (selectedSections[i]['کد درس'] === editPairedCode) {
+          currentPaired = selectedSections[i];
+          break;
+        }
+      }
+      if (currentPaired) {
+        pairedAlternatives = pairedSections.filter(function (s) {
+          return s['کد ارائه'] !== currentPaired['کد ارائه'];
+        });
+      }
+    }
+
+    var ghosts = [];
+
+    alternatives.forEach(function (section) {
+      var slots = S.parseSchedule(section['زمانبندی تشکیل کلاس']);
+      slots.forEach(function (slot) {
+        var conflict = checkGhostConflict(section, slot);
+        ghosts.push({
+          section: section,
+          slot: slot,
+          isPaired: false,
+          conflict: conflict
+        });
+      });
+    });
+
+    pairedAlternatives.forEach(function (section) {
+      var slots = S.parseSchedule(section['زمانبندی تشکیل کلاس']);
+      slots.forEach(function (slot) {
+        var conflict = checkGhostConflict(section, slot);
+        ghosts.push({
+          section: section,
+          slot: slot,
+          isPaired: true,
+          conflict: conflict
+        });
+      });
+    });
+
+    return ghosts;
+  }
+
+  function renderGhostBlocks() {
+    var timetable = $('#timetable');
+    if (!timetable) return;
+
+    timetable.querySelectorAll('.tt-ghost').forEach(function (el) { el.remove(); });
+
+    var ghosts = computeAvailableSlots();
+    var totalMin = HOURS_COUNT * 60;
+    var gridEndMin = HOURS_END * 60;
+
+    function rtlLeftPct(endMinutes) {
+      return ((gridEndMin - endMinutes) / totalMin) * 100;
+    }
+    function widthPct(durationMinutes) {
+      return (durationMinutes / totalMin) * 100;
+    }
+
+    ghosts.forEach(function (ghost) {
+      var day = ghost.slot.day;
+      var dayRow = timetable.querySelector('.tt-row[data-day="' + day + '"]');
+      if (!dayRow) return;
+      var overlay = dayRow.querySelector('.tt-overlay');
+      if (!overlay) return;
+
+      var startMin = S.timeToMinutes(ghost.slot.start);
+      var endMin = S.timeToMinutes(ghost.slot.end);
+      var dur = endMin - startMin;
+
+      var el = document.createElement('div');
+      el.className = 'tt-ghost ' + (ghost.conflict ? 'tt-ghost-conflict' : 'tt-ghost-available');
+      el.style.left = rtlLeftPct(endMin) + '%';
+      el.style.width = widthPct(dur) + '%';
+      el.dataset.section = ghost.section['کد ارائه'];
+      el.dataset.course = ghost.section['کد درس'];
+
+      // Show instructor name if block is wide enough
+      if (dur >= 45) {
+        var label = document.createElement('span');
+        label.className = 'tt-ghost-label';
+        label.textContent = ghost.section['نام استاد'] || ghost.section['نام کلاس'] || '';
+        el.appendChild(label);
+      }
+
+      // Hover: tooltip + paired highlight + same-section ghost glow
+      el.addEventListener('mouseenter', function () {
+        if (ghost.conflict) {
+          var tooltip = document.createElement('div');
+          tooltip.className = 'tt-ghost-tooltip';
+          tooltip.textContent = 'تداخل با «' + ghost.conflict['نام درس'] + '»';
+          el.appendChild(tooltip);
+        }
+        highlightPairedBlocks(ghost.section);
+        // Highlight all ghosts of same section on same day
+        var row = el.closest('.tt-row');
+        if (row) {
+          row.querySelectorAll('.tt-ghost[data-section="' + ghost.section['کد ارائه'] + '"]').forEach(function (g) {
+            g.classList.add('tt-ghost-hover');
+          });
+        }
+      });
+
+      el.addEventListener('mouseleave', function () {
+        var tooltip = el.querySelector('.tt-ghost-tooltip');
+        if (tooltip) tooltip.remove();
+        clearPairedHighlights();
+        timetable.querySelectorAll('.tt-ghost').forEach(function (g) {
+          g.classList.remove('tt-ghost-hover');
+        });
+      });
+
+      // Click: swap to this section
+      el.addEventListener('click', function (e) {
+        e.stopPropagation();
+        swapToSection(ghost.section);
+      });
+
+      overlay.appendChild(el);
+    });
+
+    // Render green hatches between same-section ghost blocks on same day
+    renderAllGreenHatches(ghosts, timetable);
+  }
+
+  // ── Green hatches (rendered once in edit mode) ──────────────────
+  function renderGreenHatchesForBlock(sectionCode, day, timetable) {
+    timetable.querySelectorAll('.tt-hatch-green').forEach(function (h) { h.remove(); });
+
+    var totalMin = HOURS_COUNT * 60;
+    var gridEndMin = HOURS_END * 60;
+    function rtlLeftPct(endMinutes) { return ((gridEndMin - endMinutes) / totalMin) * 100; }
+    function widthPct(durationMinutes) { return (durationMinutes / totalMin) * 100; }
+
+    // Find all blocks with same section code on this day
+    var dayRow = timetable.querySelector('.tt-row[data-day="' + day + '"]');
+    if (!dayRow) return;
+    var overlay = dayRow.querySelector('.tt-overlay');
+    if (!overlay) return;
+
+    var blocks = overlay.querySelectorAll('.tt-block[data-section="' + sectionCode + '"]');
+    if (blocks.length < 2) return;
+
+    // Sort by left position (RTL: larger left = earlier time)
+    var sorted = Array.from(blocks).sort(function (a, b) {
+      return parseFloat(b.style.left) - parseFloat(a.style.left);
+    });
+
+    for (var j = 0; j < sorted.length - 1; j++) {
+      var b1Left = parseFloat(sorted[j].style.left);
+      var b1Width = parseFloat(sorted[j].style.width);
+      var b2Left = parseFloat(sorted[j + 1].style.left);
+      var b2Width = parseFloat(sorted[j + 1].style.width);
+
+      // earlier = larger left, later = smaller left
+      var earlier = b1Left > b2Left ? sorted[j] : sorted[j + 1];
+      var later = b1Left > b2Left ? sorted[j + 1] : sorted[j];
+      var eLeft = parseFloat(earlier.style.left);
+      var eWidth = parseFloat(earlier.style.width);
+      var lLeft = parseFloat(later.style.left);
+
+      var gapStartMin = gridEndMin - ((eLeft + eWidth) / 100) * totalMin;
+      var gapEndMin = gridEndMin - (lLeft / 100) * totalMin;
+      var gapDur = gapEndMin - gapStartMin;
+
+      if (gapDur > 0) {
+        var hatch = document.createElement('div');
+        hatch.className = 'tt-hatch-green';
+        hatch.style.left = rtlLeftPct(gapEndMin) + '%';
+        hatch.style.width = widthPct(gapDur) + '%';
+        overlay.appendChild(hatch);
+      }
+    }
+  }
+
+  function renderAllGreenHatches(ghosts, timetable) {
+    var totalMin = HOURS_COUNT * 60;
+    var gridEndMin = HOURS_END * 60;
+
+    function rtlLeftPct(endMinutes) {
+      return ((gridEndMin - endMinutes) / totalMin) * 100;
+    }
+    function widthPct(durationMinutes) {
+      return (durationMinutes / totalMin) * 100;
+    }
+
+    // Group ghosts by day + section code
+    var groups = {};
+    ghosts.forEach(function (ghost) {
+      var key = ghost.slot.day + '|' + ghost.section['کد ارائه'];
+      if (!groups[key]) groups[key] = [];
+      groups[key].push(ghost);
+    });
+
+    Object.keys(groups).forEach(function (key) {
+      var group = groups[key];
+      if (group.length < 2) return;
+
+      var day = group[0].slot.day;
+      var dayRow = timetable.querySelector('.tt-row[data-day="' + day + '"]');
+      if (!dayRow) return;
+      var overlay = dayRow.querySelector('.tt-overlay');
+      if (!overlay) return;
+
+      // Sort by start time
+      group.sort(function (a, b) {
+        return S.timeToMinutes(a.slot.start) - S.timeToMinutes(b.slot.start);
+      });
+
+      // Render green hatches between consecutive ghosts (same as grey hatch logic)
+      for (var j = 0; j < group.length - 1; j++) {
+        var gapStart = S.timeToMinutes(group[j].slot.end);
+        var gapEnd = S.timeToMinutes(group[j + 1].slot.start);
+        var gapDur = gapEnd - gapStart;
+
+        if (gapDur > 0) {
+          var hatch = document.createElement('div');
+          hatch.className = 'tt-hatch-green';
+          hatch.style.left = rtlLeftPct(gapEnd) + '%';
+          hatch.style.width = widthPct(gapDur) + '%';
+          overlay.appendChild(hatch);
+        }
+      }
+    });
+  }
+
+  function highlightPairedBlocks(hoveredSection) {
+    var timetable = $('#timetable');
+    if (!timetable) return;
+
+    // Find the paired course by section code (same کد ارائه, different کد درس)
+    var paired = findPairedCourse(hoveredSection);
+    if (!paired) return;
+
+    // Find the paired course in selectedSections
+    var found = null;
+    for (var i = 0; i < selectedSections.length; i++) {
+      if (selectedSections[i]['کد درس'] === paired['کد درس']) {
+        // Prefer the exact matching section code
+        if (selectedSections[i]['کد ارائه'] === paired['کد ارائه']) {
+          found = selectedSections[i];
+          break;
+        }
+        // Otherwise keep as fallback
+        if (!found) found = selectedSections[i];
+      }
+    }
+
+    if (found) {
+      timetable.querySelectorAll('.tt-block[data-section="' + found['کد ارائه'] + '"]').forEach(function (block) {
+        block.classList.add('tt-block-paired');
+      });
+    }
+  }
+
+  function clearPairedHighlights() {
+    var timetable = $('#timetable');
+    if (!timetable) return;
+    timetable.querySelectorAll('.tt-block-paired').forEach(function (block) {
+      block.classList.remove('tt-block-paired');
+    });
+  }
+
+  function swapToSection(newSection) {
+    if (!editMode) return;
+
+    var courseCode = newSection['کد درس'];
+
+    // Remove old section and its pair
+    selectedSections = selectedSections.filter(function (c) {
+      return c['کد درس'] !== courseCode;
+    });
+    if (editPairedCode) {
+      selectedSections = selectedSections.filter(function (c) {
+        return c['کد درس'] !== editPairedCode;
+      });
+    }
+
+    // Add new section
+    selectedSections.push(newSection);
+
+    // Add paired section if exists and no conflict
+    if (editPairedCode) {
+      var pairedNew = findPairedCourse(newSection);
+      if (pairedNew && hasSchedule(pairedNew)) {
+        var pairConflict = findConflict(pairedNew);
+        if (!pairConflict) {
+          selectedSections.push(pairedNew);
+        } else {
+          showToast('حل تمرین تداخل زمانی دارد', 'warning');
+        }
+      }
+    }
+
+    exitEditMode();
+    updateAll();
+    showToast('گروه درس تغییر کرد', 'info');
   }
 
   // ── Course selection ───────────────────────────────────────────
@@ -278,6 +714,8 @@
       }
     }
 
+    // Exit edit mode when adding a course from the table
+    if (editMode) exitEditMode();
     updateAll();
   }
 
@@ -302,6 +740,13 @@
           return c['کد درس'] !== paired['کد درس'];
         });
       }
+    }
+    // Exit edit mode if the edited course was removed
+    if (editMode && removed && removed['کد درس'] === editCourseCode) {
+      editMode = false;
+      editCourseCode = null;
+      editPairedCode = null;
+      editCurrentSection = null;
     }
     updateAll();
   }
@@ -775,6 +1220,16 @@
     renderStats();
     renderSelectedCourses();
     initAiGenerator();
+
+    // Click outside timetable blocks to exit edit mode
+    var timetableWrapper = $('#timetableWrapper');
+    if (timetableWrapper) {
+      timetableWrapper.addEventListener('click', function (e) {
+        if (editMode && !e.target.closest('.tt-block') && !e.target.closest('.tt-ghost')) {
+          exitEditMode();
+        }
+      });
+    }
   }
 
   // ── Callbacks ──────────────────────────────────────────────────
@@ -785,6 +1240,8 @@
   };
 
   S.onModeChange = function (mode) {
+    // Exit edit mode when switching away from schedule
+    if (editMode) exitEditMode();
     if (mode === 'schedule') {
       buildIndex();
       buildScheduleTableHeader();
@@ -1090,6 +1547,7 @@
   }
 
   function loadAiSchedule() {
+    if (editMode) exitEditMode();
     if (selectedAiSchedule === null || !aiResults[selectedAiSchedule]) return;
 
     var schedule = aiResults[selectedAiSchedule];
