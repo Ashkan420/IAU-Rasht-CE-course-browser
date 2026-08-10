@@ -931,7 +931,7 @@ body {
   display: grid;
   grid-template-columns: repeat(15, 1fr) 60px;
   gap: 2px;
-  min-height: 54px;
+  min-height: 70px;
   position: relative;
 }
 
@@ -944,7 +944,7 @@ body {
 }
 
 .tt-slot {
-  border-left: 1px solid var(--cell-border);
+  border-right: 1px solid var(--cell-border);
   border-bottom: 1px solid var(--cell-border);
   position: relative;
 }
@@ -962,7 +962,7 @@ body {
   font-size: 0.65rem;
   color: var(--text-muted);
   padding: 4px 0;
-  border-left: 1px solid var(--cell-border);
+  border-right: 1px solid var(--cell-border);
 }
 
 .tt-header-day {
@@ -1131,11 +1131,12 @@ body {
   align-items: flex-start;
   justify-content: space-between;
   gap: 12px;
-  padding: 12px 14px;
+  padding: 14px 16px;
   background: var(--btn-bg);
   border: 1px solid var(--glass-border);
   border-radius: var(--radius-sm);
   transition: border-color var(--transition), background var(--transition);
+  min-height: 80px;
 }
 
 .selected-card:hover {

@@ -118,7 +118,7 @@
 
         var block = document.createElement('div');
         block.className = 'tt-block';
-        block.style.left = leftPct + '%';
+        block.style.right = leftPct + '%';
         block.style.width = widthPct + '%';
         block.style.background = color.bg;
         block.style.borderColor = color.border;
@@ -873,7 +873,7 @@
 
           var block = document.createElement('div');
           block.className = 'tt-block';
-          block.style.left = (offsetMin / totalMin * 100) + '%';
+          block.style.right = (offsetMin / totalMin * 100) + '%';
           block.style.width = (durationMin / totalMin * 100) + '%';
           block.style.background = color.bg;
           block.style.borderColor = color.border;
