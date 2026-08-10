@@ -991,6 +991,16 @@ body {
   white-space: nowrap;
 }
 
+/* Overlay layer for course blocks — positioned absolutely over time columns only */
+.tt-overlay {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 60px;
+  right: 0;
+  pointer-events: none;
+}
+
 /* Timetable course blocks */
 .tt-block {
   position: absolute;

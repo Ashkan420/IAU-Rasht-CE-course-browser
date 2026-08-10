@@ -78,7 +78,7 @@
     }
     html += '</div>';
 
-    // Day rows: day label first, then 60 quarter-cells
+    // Day rows: day label first, then 60 quarter-cells + overlay for blocks
     S.DAY_ORDER.forEach(function (day) {
       html += '<div class="tt-row" data-day="' + day + '">';
       html += '<div class="tt-cell tt-day-label">' + day + '</div>';
@@ -88,6 +88,7 @@
         else if (q % 4 === 2) cls += ' tt-half-mark';
         html += '<div class="' + cls + '"></div>';
       }
+      html += '<div class="tt-overlay"></div>';
       html += '</div>';
     });
 
@@ -111,6 +112,8 @@
       slots.forEach(function (slot) {
         var dayRow = timetable.querySelector('.tt-row[data-day="' + slot.day + '"]');
         if (!dayRow) return;
+        var overlay = dayRow.querySelector('.tt-overlay');
+        if (!overlay) return;
 
         var startMin = S.timeToMinutes(slot.start);
         var endMin = S.timeToMinutes(slot.end);
@@ -139,7 +142,7 @@
           '<span class="tt-block-prof">' + prof + '</span>' +
           '<span class="tt-block-time">' + time + '</span>';
 
-        dayRow.appendChild(block);
+        overlay.appendChild(block);
       });
     });
   }
@@ -832,22 +835,27 @@
     var schedule = aiResults[selectedAiSchedule];
     if (!schedule) return;
 
-    // Build a mini timetable
+    // Build a mini timetable (same as main: 60 cols + overlay)
     var html = '<div class="timetable">';
     // Header
     html += '<div class="tt-row tt-header">';
-    for (var h = HOURS_START; h < HOURS_END; h++) {
-      html += '<div class="tt-cell tt-hour">' + S.minutesToTime(h * 60) + '</div>';
-    }
     html += '<div class="tt-cell tt-day-label tt-header-day">روز</div>';
+    for (var hi = 0; hi < HOURS_COUNT; hi++) {
+      var hour = HOURS_START + hi;
+      html += '<div class="tt-cell tt-hour" style="grid-column:span 4">' + S.minutesToTime(hour * 60) + '</div>';
+    }
     html += '</div>';
     // Day rows
     S.DAY_ORDER.forEach(function (day) {
       html += '<div class="tt-row" data-day="' + day + '">';
-      for (var h = HOURS_START; h < HOURS_END; h++) {
-        html += '<div class="tt-cell tt-slot"></div>';
-      }
       html += '<div class="tt-cell tt-day-label">' + day + '</div>';
+      for (var q = 0; q < QUARTER_COLS; q++) {
+        var cls = 'tt-cell tt-slot';
+        if (q % 4 === 0) cls += ' tt-hour-mark';
+        else if (q % 4 === 2) cls += ' tt-half-mark';
+        html += '<div class="' + cls + '"></div>';
+      }
+      html += '<div class="tt-overlay"></div>';
       html += '</div>';
     });
     html += '</div>';
@@ -869,6 +877,8 @@
         slots.forEach(function (slot) {
           var dayRow = previewEl.querySelector('.tt-row[data-day="' + slot.day + '"]');
           if (!dayRow) return;
+          var overlay = dayRow.querySelector('.tt-overlay');
+          if (!overlay) return;
 
           var startMin = S.timeToMinutes(slot.start);
           var endMin = S.timeToMinutes(slot.end);
@@ -888,7 +898,7 @@
             '<span class="tt-block-name">' + S.esc(course['نام درس']) + '</span>' +
             '<span class="tt-block-time">' + slot.start + ' – ' + slot.end + '</span>';
 
-          dayRow.appendChild(block);
+          overlay.appendChild(block);
         });
       });
     }
