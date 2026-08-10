@@ -520,7 +520,7 @@
     const slots = [];
     // Match: dayName  از  HH:MM  تا  HH:MM
     // Handles multi-word day names and multiple slots in one string
-    const regex = /(شنبه|يكشنبه|یکشنبه|دوشنبه|سه شنبه|سه‌شنبه|چهارشنبه|پنج شنبه|پنجشنبه)\s+از\s+(\d{1,2}:\d{2})\s+تا\s+(\d{1,2}:\d{2})/g;
+    const regex = /(شنبه|يكشنبه|یکشنبه|دوشنبه|سه شنبه|سه‌شنبه|چهارشنبه|پنج شنبه|پنجشنبه)\s+[^\d]+(\d{1,2}:\d{2})\s+تا\s+(\d{1,2}:\d{2})/g;
     let match;
 
     while ((match = regex.exec(scheduleStr)) !== null) {
