@@ -61,26 +61,32 @@
   }
 
   // ── Timetable ──────────────────────────────────────────────────
+  var QUARTER_COLS = HOURS_COUNT * 4; // 60 columns (15min each)
+
   function buildTimetable() {
     var timetable = $('#timetable');
     if (!timetable) return;
 
     var html = '';
 
-    // Time header row (day labels are at the end for RTL)
+    // Time header row — reversed: 21:00 on left, 07:00 on right
+    // Each hour label spans 4 quarter-cells
     html += '<div class="tt-row tt-header">';
-    for (var h = HOURS_START; h < HOURS_END; h++) {
-      var label = S.minutesToTime(h * 60);
-      html += '<div class="tt-cell tt-hour">' + label + '</div>';
+    for (var hi = 0; hi < HOURS_COUNT; hi++) {
+      var hour = HOURS_END - 1 - hi; // 21, 20, 19, ..., 07
+      html += '<div class="tt-cell tt-hour" style="grid-column:span 4">' + S.minutesToTime(hour * 60) + '</div>';
     }
     html += '<div class="tt-cell tt-day-label tt-header-day">روز</div>';
     html += '</div>';
 
-    // Day rows
+    // Day rows — 60 quarter-cells for precise positioning
     S.DAY_ORDER.forEach(function (day) {
       html += '<div class="tt-row" data-day="' + day + '">';
-      for (var h = HOURS_START; h < HOURS_END; h++) {
-        html += '<div class="tt-cell tt-slot"></div>';
+      for (var q = 0; q < QUARTER_COLS; q++) {
+        var cls = 'tt-cell tt-slot';
+        if (q % 4 === 0) cls += ' tt-hour-mark';
+        else if (q % 4 === 2) cls += ' tt-half-mark';
+        html += '<div class="' + cls + '"></div>';
       }
       html += '<div class="tt-cell tt-day-label">' + day + '</div>';
       html += '</div>';
@@ -118,7 +124,7 @@
 
         var block = document.createElement('div');
         block.className = 'tt-block';
-        block.style.right = leftPct + '%';
+        block.style.left = leftPct + '%';
         block.style.width = widthPct + '%';
         block.style.background = color.bg;
         block.style.borderColor = color.border;
@@ -873,7 +879,7 @@
 
           var block = document.createElement('div');
           block.className = 'tt-block';
-          block.style.right = (offsetMin / totalMin * 100) + '%';
+          block.style.left = (offsetMin / totalMin * 100) + '%';
           block.style.width = (durationMin / totalMin * 100) + '%';
           block.style.background = color.bg;
           block.style.borderColor = color.border;

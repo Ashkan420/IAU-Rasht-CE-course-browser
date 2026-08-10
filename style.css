@@ -929,10 +929,11 @@ body {
 
 .tt-row {
   display: grid;
-  grid-template-columns: repeat(15, 1fr) 60px;
-  gap: 2px;
+  grid-template-columns: repeat(60, 1fr) 60px;
+  gap: 0;
   min-height: 70px;
   position: relative;
+  direction: ltr;
 }
 
 .tt-header {
@@ -944,17 +945,22 @@ body {
 }
 
 .tt-slot {
-  border-right: 1px solid var(--cell-border);
   border-bottom: 1px solid var(--cell-border);
   position: relative;
 }
 
-.tt-slot:nth-child(even) {
-  background: rgba(255, 255, 255, 0.01);
+/* Hour boundary — solid line */
+.tt-hour-mark {
+  border-left: 1px solid var(--cell-border);
 }
 
-:root[data-theme="light"] .tt-slot:nth-child(even) {
-  background: rgba(0, 0, 0, 0.01);
+/* Half-hour — faded line */
+.tt-half-mark {
+  border-left: 1px dashed rgba(255, 255, 255, 0.04);
+}
+
+:root[data-theme="light"] .tt-half-mark {
+  border-left: 1px dashed rgba(0, 0, 0, 0.06);
 }
 
 .tt-hour {
@@ -962,7 +968,7 @@ body {
   font-size: 0.65rem;
   color: var(--text-muted);
   padding: 4px 0;
-  border-right: 1px solid var(--cell-border);
+  border-left: 1px solid var(--cell-border);
 }
 
 .tt-header-day {
