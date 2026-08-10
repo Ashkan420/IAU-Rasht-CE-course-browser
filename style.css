@@ -1162,10 +1162,11 @@ body {
 }
 
 /* ========================================
-   Selected Courses
+   Selected Courses (table)
    ======================================== */
 .selected-courses {
   padding: 16px 20px;
+  overflow-x: auto;
 }
 
 .selected-courses h3,
@@ -1177,60 +1178,49 @@ body {
 }
 
 .selected-list {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
+  overflow-x: auto;
 }
 
-.selected-card {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 14px 16px;
-  background: var(--btn-bg);
-  border: 1px solid var(--glass-border);
-  border-radius: var(--radius-sm);
-  transition: border-color var(--transition), background var(--transition);
-  min-height: 80px;
+.selected-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.82rem;
 }
 
-.selected-card:hover {
-  background: var(--btn-hover);
-  border-color: var(--btn-hover-border);
-}
-
-.selected-card:hover {
-  border-color: var(--btn-hover-border);
-}
-
-.selected-card-info {
-  flex: 1;
-  min-width: 0;
-}
-
-.selected-card-name {
-  font-size: 0.85rem;
+.selected-table th {
+  padding: 8px 10px;
+  text-align: right;
   font-weight: 600;
-  color: var(--text-primary);
-  margin-bottom: 2px;
-}
-
-.selected-card-prof {
-  font-size: 0.78rem;
-  color: var(--text-secondary);
-}
-
-.selected-card-schedule {
-  font-size: 0.72rem;
+  font-size: 0.75rem;
   color: var(--text-muted);
-  margin-top: 4px;
+  border-bottom: 1px solid var(--glass-border);
+  white-space: nowrap;
 }
 
-.selected-card-actions {
-  display: flex;
-  gap: 6px;
-  flex-shrink: 0;
+.selected-table td {
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--cell-border);
+  color: var(--text-primary);
+  white-space: nowrap;
+}
+
+.selected-table td.day-cell {
+  font-weight: 600;
+  color: var(--text-secondary);
+  background: var(--thead-bg);
+  text-align: center;
+  vertical-align: middle;
+  white-space: nowrap;
+  border-left: 1px solid var(--cell-border);
+}
+
+.selected-table tr:last-child td {
+  border-bottom: none;
+}
+
+.selected-table .col-action {
+  text-align: center;
+  white-space: nowrap;
 }
 
 .btn-sm {
@@ -1274,21 +1264,21 @@ body {
 
 .stat-card {
   text-align: center;
-  padding: 10px 8px;
+  padding: 6px 4px;
   background: var(--btn-bg);
   border: 1px solid var(--glass-border);
   border-radius: var(--radius-sm);
 }
 
 .stat-value {
-  font-size: 1.1rem;
+  font-size: 0.95rem;
   font-weight: 700;
   color: var(--accent);
   direction: ltr;
 }
 
 .stat-label {
-  font-size: 0.7rem;
+  font-size: 0.65rem;
   color: var(--text-muted);
   margin-top: 2px;
 }
@@ -1491,16 +1481,6 @@ body {
 
   .stats-grid {
     grid-template-columns: repeat(2, 1fr);
-  }
-
-  .selected-card {
-    flex-direction: column;
-    gap: 8px;
-  }
-
-  .selected-card-actions {
-    width: 100%;
-    justify-content: flex-end;
   }
 
   .tt-block-name { font-size: 0.6rem; }

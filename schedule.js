@@ -257,7 +257,7 @@
     updateAll();
   }
 
-  function changeGroup(courseCode) {
+  function changeGroup(courseCode, currentGender) {
     var sections = courseCodeIndex[courseCode];
     if (!sections || sections.length <= 1) return;
 
@@ -271,7 +271,15 @@
     }
 
     var alternatives = sections.filter(function (s) {
-      return !currentSection || s['کد ارائه'] !== currentSection['کد ارائه'];
+      if (currentSection && s['کد ارائه'] === currentSection['کد ارائه']) return false;
+      // Filter عمومی by gender
+      if (s['نوع واحد'] === 'عمومی' && currentGender && currentGender !== 'همه') {
+        var gender = (s['جنسیت'] || '').trim();
+        var className = (s['نام کلاس'] || '').trim();
+        if (currentGender === 'خواهران' && gender !== 'زن' && !className.includes('خواهران')) return false;
+        if (currentGender === 'برادران' && gender !== 'مرد' && !className.includes('برادران')) return false;
+      }
+      return true;
     });
 
     if (alternatives.length === 0) {
@@ -498,30 +506,50 @@
       return;
     }
 
-    var html = '';
-    selectedSections.forEach(function (course) {
-      var sectionCode = course['کد ارائه'];
-      var courseCode = course['کد درس'];
-      var name = esc(course['نام درس']);
-      var prof = esc(course['نام استاد'] || '—');
-      var schedule = esc(course['زمانبندی تشکیل کلاس'] || '—');
-      var altCount = (courseCodeIndex[courseCode] || []).length;
+    // Group courses by day
+    var dayGroups = {};
+    S.DAY_ORDER.forEach(function (d) { dayGroups[d] = []; });
 
-      html += '<div class="selected-card" data-section="' + escAttr(sectionCode) + '">';
-      html += '<div class="selected-card-info">';
-      html += '<div class="selected-card-name">' + name + '</div>';
-      html += '<div class="selected-card-prof">' + prof + '</div>';
-      html += '<div class="selected-card-schedule">' + schedule + '</div>';
-      html += '</div>';
-      html += '<div class="selected-card-actions">';
-      if (altCount > 1) {
-        html += '<button class="btn btn-sm btn-change" data-course="' + escAttr(courseCode) + '">تغییر گروه</button>';
-      }
-      html += '<button class="btn btn-sm btn-remove" data-section="' + escAttr(sectionCode) + '">حذف</button>';
-      html += '</div>';
-      html += '</div>';
+    selectedSections.forEach(function (course) {
+      var slots = S.parseSchedule(course['زمانبندی تشکیل کلاس']);
+      var daysSeen = {};
+      slots.forEach(function (slot) {
+        if (!daysSeen[slot.day]) {
+          daysSeen[slot.day] = true;
+          if (dayGroups[slot.day]) {
+            dayGroups[slot.day].push(course);
+          }
+        }
+      });
     });
 
+    var html = '<table class="selected-table"><thead><tr>';
+    html += '<th>روز</th><th>نام درس</th><th>استاد</th><th>زمان</th><th>عملیات</th>';
+    html += '</tr></thead><tbody>';
+
+    S.DAY_ORDER.forEach(function (day) {
+      var courses = dayGroups[day];
+      if (courses.length === 0) return;
+
+      courses.forEach(function (course, idx) {
+        html += '<tr>';
+        if (idx === 0) {
+          html += '<td class="day-cell" rowspan="' + courses.length + '">' + day + '</td>';
+        }
+        html += '<td>' + esc(course['نام درس']) + '</td>';
+        html += '<td>' + esc(course['نام استاد'] || '—') + '</td>';
+        html += '<td>' + esc(course['زمانبندی تشکیل کلاس'] || '—') + '</td>';
+        html += '<td class="col-action">';
+        var altCount = (courseCodeIndex[course['کد درس']] || []).length;
+        if (altCount > 1) {
+          html += '<button class="btn btn-sm btn-change" data-course="' + escAttr(course['کد درس']) + '">تغییر گروه</button> ';
+        }
+        html += '<button class="btn btn-sm btn-remove" data-section="' + escAttr(course['کد ارائه']) + '">حذف</button>';
+        html += '</td></tr>';
+      });
+    });
+
+    html += '</tbody></table>';
     selectedList.innerHTML = html;
 
     // Event delegation
@@ -529,7 +557,7 @@
       var changeBtn = e.target.closest('.btn-change');
       var removeBtn = e.target.closest('.btn-remove');
       if (changeBtn) {
-        changeGroup(changeBtn.dataset.course);
+        changeGroup(changeBtn.dataset.course, S.currentGender);
       } else if (removeBtn) {
         removeCourse(removeBtn.dataset.section);
       }
