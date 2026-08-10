@@ -162,6 +162,12 @@
             '<span class="tt-block-name">' + name + '</span>' +
             '<span class="tt-block-prof">' + prof + '</span>';
 
+          // Scale font size based on block duration
+          var nameSize = Math.min(0.8, Math.max(0.55, 0.55 + dur / 300 * 0.25));
+          var profSize = Math.min(0.65, Math.max(0.5, 0.5 + dur / 300 * 0.15));
+          block.querySelector('.tt-block-name').style.fontSize = nameSize + 'rem';
+          block.querySelector('.tt-block-prof').style.fontSize = profSize + 'rem';
+
           overlay.appendChild(block);
         });
 
@@ -946,6 +952,10 @@
             block.title = slot.start + ' – ' + slot.end;
             block.innerHTML =
               '<span class="tt-block-name">' + S.esc(course['نام درس']) + '</span>';
+
+            // Scale font size based on block duration
+            var nameSize = Math.min(0.8, Math.max(0.55, 0.55 + dur / 300 * 0.25));
+            block.querySelector('.tt-block-name').style.fontSize = nameSize + 'rem';
 
             overlay.appendChild(block);
           });
