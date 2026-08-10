@@ -918,18 +918,21 @@ body {
 .timetable-scroll {
   overflow-x: auto;
   padding: 0 16px 16px;
+  width: 100%;
 }
 
 .timetable {
   display: flex;
   flex-direction: column;
   gap: 2px;
-  min-width: 600px;
+  min-width: 750px;
+  width: 100%;
+  table-layout: fixed;
 }
 
 .tt-row {
   display: grid;
-  grid-template-columns: 60px repeat(60, 1fr);
+  grid-template-columns: repeat(60, 1fr) 32px;
   gap: 0;
   min-height: 70px;
   position: relative;
@@ -964,6 +967,7 @@ body {
 }
 
 .tt-hour {
+  grid-column: span 4;
   text-align: center;
   font-size: 0.65rem;
   color: var(--text-muted);
@@ -976,6 +980,11 @@ body {
   font-size: 0.7rem;
   color: var(--text-muted);
   font-weight: 600;
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .tt-day-label {
@@ -987,8 +996,10 @@ body {
   color: var(--text-secondary);
   background: var(--thead-bg);
   border-radius: 4px;
-  padding: 4px;
-  white-space: nowrap;
+  padding: 4px 2px;
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
+  width: 32px;
 }
 
 /* Overlay layer for course blocks — positioned absolutely over time columns only */
@@ -996,9 +1007,38 @@ body {
   position: absolute;
   top: 0;
   bottom: 0;
-  left: 60px;
-  right: 0;
+  left: 0;
+  right: 32px;
   pointer-events: none;
+}
+
+/* Hatched connector between same-day blocks of same course */
+.tt-hatch {
+  position: absolute;
+  top: 8px;
+  bottom: 8px;
+  border-radius: 3px;
+  background: repeating-linear-gradient(
+    -45deg,
+    transparent,
+    transparent 3px,
+    rgba(255,255,255,0.06) 3px,
+    rgba(255,255,255,0.06) 6px
+  );
+  border-top: 1px dashed rgba(255,255,255,0.1);
+  border-bottom: 1px dashed rgba(255,255,255,0.1);
+  pointer-events: none;
+}
+
+:root[data-theme="light"] .tt-hatch {
+  background: repeating-linear-gradient(
+    -45deg,
+    transparent,
+    transparent 3px,
+    rgba(0,0,0,0.04) 3px,
+    rgba(0,0,0,0.04) 6px
+  );
+  border-color: rgba(0,0,0,0.08);
 }
 
 /* Timetable course blocks */
@@ -1469,7 +1509,7 @@ body {
 
   .tt-day-label {
     font-size: 0.6rem;
-    min-width: 40px;
+    width: 28px;
   }
 
   .tt-hour {

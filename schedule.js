@@ -69,25 +69,25 @@
 
     var html = '';
 
-    // Header row: day label first, then hours left→right (07→21)
+    // Header row: hours reversed (21→07), day label at end (right side)
     html += '<div class="tt-row tt-header">';
-    html += '<div class="tt-cell tt-day-label tt-header-day">روز</div>';
     for (var hi = 0; hi < HOURS_COUNT; hi++) {
-      var hour = HOURS_START + hi;
-      html += '<div class="tt-cell tt-hour" style="grid-column:span 4">' + S.minutesToTime(hour * 60) + '</div>';
+      var hour = HOURS_END - 1 - hi; // 21, 20, 19, ..., 07
+      html += '<div class="tt-cell tt-hour">' + S.minutesToTime(hour * 60) + '</div>';
     }
+    html += '<div class="tt-cell tt-day-label tt-header-day">روز</div>';
     html += '</div>';
 
-    // Day rows: day label first, then 60 quarter-cells + overlay for blocks
+    // Day rows: 60 quarter-cells, day label at end (right), overlay on left
     S.DAY_ORDER.forEach(function (day) {
       html += '<div class="tt-row" data-day="' + day + '">';
-      html += '<div class="tt-cell tt-day-label">' + day + '</div>';
       for (var q = 0; q < QUARTER_COLS; q++) {
         var cls = 'tt-cell tt-slot';
         if (q % 4 === 0) cls += ' tt-hour-mark';
         else if (q % 4 === 2) cls += ' tt-half-mark';
         html += '<div class="' + cls + '"></div>';
       }
+      html += '<div class="tt-cell tt-day-label">' + day + '</div>';
       html += '<div class="tt-overlay"></div>';
       html += '</div>';
     });
@@ -99,50 +99,86 @@
     var timetable = $('#timetable');
     if (!timetable) return;
 
-    // Remove old blocks
-    var old = timetable.querySelectorAll('.tt-block');
-    for (var i = 0; i < old.length; i++) old[i].remove();
+    // Remove old blocks and hatches
+    timetable.querySelectorAll('.tt-block, .tt-hatch').forEach(function (el) { el.remove(); });
+
+    var totalMin = HOURS_COUNT * 60;
+    var gridEndMin = HOURS_END * 60; // 22:00 in absolute minutes
+
+    // RTL block positioning: offset from grid end (21:00 = left edge)
+    function rtlLeftPct(endMinutes) {
+      return ((gridEndMin - endMinutes) / totalMin) * 100;
+    }
+    function widthPct(durationMinutes) {
+      return (durationMinutes / totalMin) * 100;
+    }
 
     selectedSections.forEach(function (course) {
       var slots = S.parseSchedule(course['زمانبندی تشکیل کلاس']);
+      if (slots.length === 0) return;
+
       var colorIdx = assignColor(course['کد درس']);
       var color = TIMETABLE_COLORS[colorIdx];
       var sectionCode = course['کد ارائه'];
+      var name = esc(course['نام درس']);
+      var prof = esc(course['نام استاد']);
 
+      // Group slots by day for hatch rendering
+      var slotsByDay = {};
       slots.forEach(function (slot) {
-        var dayRow = timetable.querySelector('.tt-row[data-day="' + slot.day + '"]');
+        if (!slotsByDay[slot.day]) slotsByDay[slot.day] = [];
+        slotsByDay[slot.day].push(slot);
+      });
+
+      Object.keys(slotsByDay).forEach(function (day) {
+        var daySlots = slotsByDay[day];
+        var dayRow = timetable.querySelector('.tt-row[data-day="' + day + '"]');
         if (!dayRow) return;
         var overlay = dayRow.querySelector('.tt-overlay');
         if (!overlay) return;
 
-        var startMin = S.timeToMinutes(slot.start);
-        var endMin = S.timeToMinutes(slot.end);
-        var totalMin = HOURS_COUNT * 60;
-        var offsetMin = startMin - HOURS_START * 60;
-        var durationMin = endMin - startMin;
+        // Sort by start time
+        daySlots.sort(function (a, b) {
+          return S.timeToMinutes(a.start) - S.timeToMinutes(b.start);
+        });
 
-        var leftPct = (offsetMin / totalMin) * 100;
-        var widthPct = (durationMin / totalMin) * 100;
+        // Render blocks
+        daySlots.forEach(function (slot) {
+          var startMin = S.timeToMinutes(slot.start);
+          var endMin = S.timeToMinutes(slot.end);
+          var dur = endMin - startMin;
 
-        var block = document.createElement('div');
-        block.className = 'tt-block';
-        block.style.left = leftPct + '%';
-        block.style.width = widthPct + '%';
-        block.style.background = color.bg;
-        block.style.borderColor = color.border;
-        block.style.color = color.text;
-        block.dataset.section = sectionCode;
+          var block = document.createElement('div');
+          block.className = 'tt-block';
+          block.style.left = rtlLeftPct(endMin) + '%';
+          block.style.width = widthPct(dur) + '%';
+          block.style.background = color.bg;
+          block.style.borderColor = color.border;
+          block.style.color = color.text;
+          block.dataset.section = sectionCode;
 
-        var name = esc(course['نام درس']);
-        var prof = esc(course['نام استاد']);
-        var time = slot.end + ' – ' + slot.start;
+          block.innerHTML =
+            '<span class="tt-block-name">' + name + '</span>' +
+            '<span class="tt-block-prof">' + prof + '</span>' +
+            '<span class="tt-block-time">' + slot.end + ' – ' + slot.start + '</span>';
 
-        block.innerHTML =
-          '<span class="tt-block-name">' + name + '</span>' +
-          '<span class="tt-block-prof">' + prof + '</span>' +
-          '<span class="tt-block-time">' + time + '</span>';
+          overlay.appendChild(block);
+        });
 
-        overlay.appendChild(block);
+        // Render hatched connectors between consecutive blocks
+        for (var j = 0; j < daySlots.length - 1; j++) {
+          var gapStart = S.timeToMinutes(daySlots[j].end);
+          var gapEnd = S.timeToMinutes(daySlots[j + 1].start);
+          var gapDuration = gapEnd - gapStart;
+
+          if (gapDuration > 0) {
+            var hatch = document.createElement('div');
+            hatch.className = 'tt-hatch';
+            hatch.style.left = rtlLeftPct(gapEnd) + '%';
+            hatch.style.width = widthPct(gapDuration) + '%';
+            overlay.appendChild(hatch);
+          }
+        }
       });
     });
   }
@@ -835,26 +871,26 @@
     var schedule = aiResults[selectedAiSchedule];
     if (!schedule) return;
 
-    // Build a mini timetable (same as main: 60 cols + overlay)
+    // Build a mini timetable (same as main: RTL, 60 cols + overlay)
     var html = '<div class="timetable">';
-    // Header
+    // Header: reversed hours (21→07), day label at end
     html += '<div class="tt-row tt-header">';
-    html += '<div class="tt-cell tt-day-label tt-header-day">روز</div>';
     for (var hi = 0; hi < HOURS_COUNT; hi++) {
-      var hour = HOURS_START + hi;
-      html += '<div class="tt-cell tt-hour" style="grid-column:span 4">' + S.minutesToTime(hour * 60) + '</div>';
+      var hour = HOURS_END - 1 - hi;
+      html += '<div class="tt-cell tt-hour">' + S.minutesToTime(hour * 60) + '</div>';
     }
+    html += '<div class="tt-cell tt-day-label tt-header-day">روز</div>';
     html += '</div>';
-    // Day rows
+    // Day rows: 60 cells, day label at end, overlay on left
     S.DAY_ORDER.forEach(function (day) {
       html += '<div class="tt-row" data-day="' + day + '">';
-      html += '<div class="tt-cell tt-day-label">' + day + '</div>';
       for (var q = 0; q < QUARTER_COLS; q++) {
         var cls = 'tt-cell tt-slot';
         if (q % 4 === 0) cls += ' tt-hour-mark';
         else if (q % 4 === 2) cls += ' tt-half-mark';
         html += '<div class="' + cls + '"></div>';
       }
+      html += '<div class="tt-cell tt-day-label">' + day + '</div>';
       html += '<div class="tt-overlay"></div>';
       html += '</div>';
     });
@@ -874,31 +910,59 @@
         var color = TIMETABLE_COLORS[colorIdx % TIMETABLE_COLORS.length];
         colorIdx++;
 
+        var totalMin = HOURS_COUNT * 60;
+        var gridEndMin = HOURS_END * 60;
+
+        // Group by day for hatch rendering
+        var slotsByDay = {};
         slots.forEach(function (slot) {
-          var dayRow = previewEl.querySelector('.tt-row[data-day="' + slot.day + '"]');
+          if (!slotsByDay[slot.day]) slotsByDay[slot.day] = [];
+          slotsByDay[slot.day].push(slot);
+        });
+
+        Object.keys(slotsByDay).forEach(function (day) {
+          var daySlots = slotsByDay[day];
+          var dayRow = previewEl.querySelector('.tt-row[data-day="' + day + '"]');
           if (!dayRow) return;
           var overlay = dayRow.querySelector('.tt-overlay');
           if (!overlay) return;
 
-          var startMin = S.timeToMinutes(slot.start);
-          var endMin = S.timeToMinutes(slot.end);
-          var totalMin = HOURS_COUNT * 60;
-          var offsetMin = startMin - HOURS_START * 60;
-          var durationMin = endMin - startMin;
+          daySlots.sort(function (a, b) {
+            return S.timeToMinutes(a.start) - S.timeToMinutes(b.start);
+          });
 
-          var block = document.createElement('div');
-          block.className = 'tt-block';
-          block.style.left = (offsetMin / totalMin * 100) + '%';
-          block.style.width = (durationMin / totalMin * 100) + '%';
-          block.style.background = color.bg;
-          block.style.borderColor = color.border;
-          block.style.color = color.text;
+          daySlots.forEach(function (slot) {
+            var endMin = S.timeToMinutes(slot.end);
+            var dur = endMin - S.timeToMinutes(slot.start);
 
-          block.innerHTML =
-            '<span class="tt-block-name">' + S.esc(course['نام درس']) + '</span>' +
-            '<span class="tt-block-time">' + slot.start + ' – ' + slot.end + '</span>';
+            var block = document.createElement('div');
+            block.className = 'tt-block';
+            block.style.left = ((gridEndMin - endMin) / totalMin * 100) + '%';
+            block.style.width = (dur / totalMin * 100) + '%';
+            block.style.background = color.bg;
+            block.style.borderColor = color.border;
+            block.style.color = color.text;
 
-          overlay.appendChild(block);
+            block.innerHTML =
+              '<span class="tt-block-name">' + S.esc(course['نام درس']) + '</span>' +
+              '<span class="tt-block-time">' + slot.end + ' – ' + slot.start + '</span>';
+
+            overlay.appendChild(block);
+          });
+
+          // Hatched connectors
+          for (var j = 0; j < daySlots.length - 1; j++) {
+            var gapStart = S.timeToMinutes(daySlots[j].end);
+            var gapEnd = S.timeToMinutes(daySlots[j + 1].start);
+            var gapDur = gapEnd - gapStart;
+            if (gapDur > 0) {
+              var hatch = document.createElement('div');
+              hatch.className = 'tt-hatch';
+              hatch.style.left = ((gridEndMin - gapEnd) / totalMin * 100) + '%';
+              hatch.style.width = (gapDur / totalMin * 100) + '%';
+              overlay.appendChild(hatch);
+            }
+          }
         });
       });
     }
