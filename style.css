@@ -1072,6 +1072,8 @@ body {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  direction: rtl;
+  text-align: center;
 }
 
 .tt-block-prof {
@@ -1080,14 +1082,12 @@ body {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  direction: rtl;
+  text-align: center;
 }
 
 .tt-block-time {
-  font-size: 0.6rem;
-  opacity: 0.7;
-  direction: ltr;
-  text-align: center;
-  margin-top: 2px;
+  display: none;
 }
 
 /* ========================================
@@ -1505,7 +1505,6 @@ body {
 
   .tt-block-name { font-size: 0.6rem; }
   .tt-block-prof { display: none; }
-  .tt-block-time { font-size: 0.55rem; }
 
   .tt-day-label {
     font-size: 0.6rem;

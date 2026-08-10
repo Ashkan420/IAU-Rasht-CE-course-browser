@@ -157,10 +157,10 @@
           block.style.color = color.text;
           block.dataset.section = sectionCode;
 
+          block.title = slot.start + ' – ' + slot.end;
           block.innerHTML =
             '<span class="tt-block-name">' + name + '</span>' +
-            '<span class="tt-block-prof">' + prof + '</span>' +
-            '<span class="tt-block-time">' + slot.end + ' – ' + slot.start + '</span>';
+            '<span class="tt-block-prof">' + prof + '</span>';
 
           overlay.appendChild(block);
         });
@@ -943,9 +943,9 @@
             block.style.borderColor = color.border;
             block.style.color = color.text;
 
+            block.title = slot.start + ' – ' + slot.end;
             block.innerHTML =
-              '<span class="tt-block-name">' + S.esc(course['نام درس']) + '</span>' +
-              '<span class="tt-block-time">' + slot.end + ' – ' + slot.start + '</span>';
+              '<span class="tt-block-name">' + S.esc(course['نام درس']) + '</span>';
 
             overlay.appendChild(block);
           });
