@@ -217,12 +217,27 @@
     return S.parseSchedule(course['زمانبندی تشکیل کلاس']).length > 0;
   }
 
+  // ── Paired courses (حل تمرین ↔ main) ──────────────────────────
+  function findPairedCourse(course) {
+    var section = course['کد ارائه'];
+    if (!section) return null;
+    var pairs = S.allCourses.filter(function (c) {
+      return c['کد ارائه'] === section && c['کد درس'] !== course['کد درس'];
+    });
+    if (pairs.length === 0) return null;
+    return pairs[0];
+  }
+
   // ── Course selection ───────────────────────────────────────────
   function addCourse(course) {
     if (!hasSchedule(course)) {
       showToast('این درس زمانبندی ندارد', 'warning');
       return;
     }
+
+    // Find paired course (حل تمرین ↔ main)
+    var paired = findPairedCourse(course);
+    if (paired && !hasSchedule(paired)) paired = null; // skip if pair has no schedule
 
     // Check if same course already selected (replace)
     var existingIdx = -1;
@@ -236,6 +251,15 @@
     if (existingIdx >= 0) {
       // Replace existing section of same course
       selectedSections[existingIdx] = course;
+      // Also replace paired course if selected
+      if (paired) {
+        for (var j = 0; j < selectedSections.length; j++) {
+          if (selectedSections[j]['کد درس'] === paired['کد درس']) {
+            selectedSections[j] = paired;
+            break;
+          }
+        }
+      }
     } else {
       // Check conflict with other courses
       var conflict = findConflict(course);
@@ -245,15 +269,40 @@
         return;
       }
       selectedSections.push(course);
+      // Auto-add paired course
+      if (paired) {
+        var pairConflict = findConflict(paired);
+        if (!pairConflict) {
+          selectedSections.push(paired);
+        }
+      }
     }
 
     updateAll();
   }
 
   function removeCourse(sectionCode) {
+    // Find the course being removed to identify its pair
+    var removed = null;
+    for (var i = 0; i < selectedSections.length; i++) {
+      if (selectedSections[i]['کد ارائه'] === sectionCode) {
+        removed = selectedSections[i];
+        break;
+      }
+    }
+    // Remove the course and its pair (same section code)
     selectedSections = selectedSections.filter(function (c) {
       return c['کد ارائه'] !== sectionCode;
     });
+    // Also remove pair by course code if it exists
+    if (removed) {
+      var paired = findPairedCourse(removed);
+      if (paired) {
+        selectedSections = selectedSections.filter(function (c) {
+          return c['کد درس'] !== paired['کد درس'];
+        });
+      }
+    }
     updateAll();
   }
 
@@ -354,16 +403,33 @@
             return c['کد درس'] !== courseCode;
           });
 
+          // Also remove paired course
+          var pairedOld = findPairedCourse(current);
+          if (pairedOld) {
+            selectedSections = selectedSections.filter(function (c) {
+              return c['کد درس'] !== pairedOld['کد درس'];
+            });
+          }
+
           // Check conflict before adding
           var conflict = findConflict(newSection);
           if (conflict) {
             showToast('تداخل زمانی با «' + conflict['نام درس'] + '»', 'error');
             highlightConflict(conflict['کد ارائه']);
-            // Re-add old section
+            // Re-add old section and its pair
             if (current) selectedSections.push(current);
+            if (pairedOld) selectedSections.push(pairedOld);
             updateAll();
           } else {
             selectedSections.push(newSection);
+            // Also add paired course for new section
+            var pairedNew = findPairedCourse(newSection);
+            if (pairedNew && hasSchedule(pairedNew)) {
+              var pairConflict = findConflict(pairedNew);
+              if (!pairConflict) {
+                selectedSections.push(pairedNew);
+              }
+            }
             updateAll();
           }
         }
@@ -674,6 +740,7 @@
     }
 
     // Event delegation for add/remove buttons
+    tbody.removeEventListener('click', handleScheduleTableClick);
     tbody.addEventListener('click', handleScheduleTableClick);
   }
 
