@@ -40,6 +40,10 @@
   var colorMap = {};         // courseCode -> color index
   var nextColor = 0;
 
+  // ── Sub-mode State ────────────────────────────────────────────
+  var scheduleSubMode = 'manual'; // 'manual' | 'ai'
+  var excludedInstructors = [];   // Array of instructor names to exclude from AI
+
   // ── Edit Mode State ────────────────────────────────────────────
   var editMode = false;
   var editCourseCode = null;      // Course code being edited
@@ -1115,17 +1119,11 @@
       tr.appendChild(th);
     });
 
-    // Action column
+    // Single action column — content depends on sub-mode
     var thAction = document.createElement('th');
-    thAction.textContent = 'عملیات';
     thAction.classList.add('col-action');
+    thAction.textContent = scheduleSubMode === 'manual' ? 'عملیات' : 'انتخاب';
     tr.appendChild(thAction);
-
-    // AI select column
-    var thAi = document.createElement('th');
-    thAi.textContent = 'هوش مصنوعی';
-    thAi.classList.add('col-ai');
-    tr.appendChild(thAi);
   }
 
   function renderScheduleTable() {
@@ -1162,28 +1160,33 @@
         cells += '<td' + cls + title + '>' + val + '</td>';
       });
 
-      // Action cell
+      // Action cell — content depends on sub-mode
       var sectionCode = c['کد ارائه'];
-      var isSelected = selectedMap[sectionCode];
-      var hasTime = hasSchedule(c);
-      var actionHtml;
-      if (isSelected) {
-        actionHtml = '<button class="btn-icon btn-added" data-section="' + escAttr(sectionCode) + '" title="حذف از برنامه">✓</button>';
-      } else if (hasTime) {
-        actionHtml = '<button class="btn-icon btn-add-course" data-section="' + escAttr(sectionCode) + '" title="افزودن به برنامه">+</button>';
-      } else {
-        actionHtml = '<span class="btn-icon btn-no-schedule" title="زمانبندی ندارد">—</span>';
-      }
-      cells += '<td class="col-action">' + actionHtml + '</td>';
-
-      // AI select checkbox
       var courseCode = c['کد درس'];
-      var isDesiredCourse = isDesired(courseCode);
-      var hasSchedule2 = hasSchedule(c);
-      if (hasSchedule2) {
-        cells += '<td class="col-ai"><input type="checkbox" class="ai-checkbox" data-course="' + S.escAttr(courseCode) + '"' + (isDesiredCourse ? ' checked' : '') + ' title="انتخاب برای هوش مصنوعی"></td>';
+      var hasTime = hasSchedule(c);
+
+      if (scheduleSubMode === 'manual') {
+        // Manual mode: section-level add/remove
+        var isSelected = selectedMap[sectionCode];
+        if (isSelected) {
+          cells += '<td class="col-action"><button class="btn-icon btn-added" data-section="' + escAttr(sectionCode) + '" title="حذف از برنامه">✓</button></td>';
+        } else if (hasTime) {
+          cells += '<td class="col-action"><button class="btn-icon btn-add-course" data-section="' + escAttr(sectionCode) + '" title="افزودن به برنامه">+</button></td>';
+        } else {
+          cells += '<td class="col-action"><span class="btn-icon btn-no-schedule" title="زمانبندی ندارد">—</span></td>';
+        }
       } else {
-        cells += '<td class="col-ai"></td>';
+        // AI mode: course-level selection
+        var isDesiredCourse = isDesired(courseCode);
+        if (hasTime) {
+          if (isDesiredCourse) {
+            cells += '<td class="col-action"><button class="btn-icon btn-ai-selected" data-course="' + escAttr(courseCode) + '" title="حذف از لیست هوش مصنوعی">✓</button></td>';
+          } else {
+            cells += '<td class="col-action"><button class="btn-icon btn-ai-add" data-course="' + escAttr(courseCode) + '" title="افزودن به لیست هوش مصنوعی">+</button></td>';
+          }
+        } else {
+          cells += '<td class="col-action"><span class="btn-icon btn-no-schedule" title="زمانبندی ندارد">—</span></td>';
+        }
       }
 
       return '<tr data-section="' + escAttr(sectionCode) + '">' + cells + '</tr>';
@@ -1205,14 +1208,18 @@
   function handleScheduleTableClick(e) {
     var addBtn = e.target.closest('.btn-add-course');
     var removeBtn = e.target.closest('.btn-added');
-    var aiCheck = e.target.closest('.ai-checkbox');
+    var aiAddBtn = e.target.closest('.btn-ai-add');
+    var aiRemoveBtn = e.target.closest('.btn-ai-selected');
+
     if (addBtn) {
       var course = sectionIndex[addBtn.dataset.section];
       if (course) addCourse(course);
     } else if (removeBtn) {
       removeCourse(removeBtn.dataset.section);
-    } else if (aiCheck) {
-      toggleDesiredCourse(aiCheck.dataset.course);
+    } else if (aiAddBtn) {
+      toggleDesiredCourse(aiAddBtn.dataset.course);
+    } else if (aiRemoveBtn) {
+      toggleDesiredCourse(aiRemoveBtn.dataset.course);
     }
   }
 
@@ -1221,6 +1228,39 @@
     renderTimetableBlocks();
     renderSelectedCourses();
     renderStats();
+    renderScheduleTable();
+    if (scheduleSubMode === 'ai') {
+      renderAiCourseTags();
+    }
+  }
+
+  // ── Sub-mode Toggle ──────────────────────────────────────────
+  function setScheduleSubMode(mode) {
+    scheduleSubMode = mode;
+
+    // Update tab UI
+    $$('.submode-tab').forEach(function (t) {
+      t.classList.toggle('active', t.dataset.submode === mode);
+      t.setAttribute('aria-selected', t.dataset.submode === mode ? 'true' : 'false');
+    });
+
+    // Toggle visibility of sections
+    var aiGenerator = $('#aiGenerator');
+    var statsEl = $('#scheduleStats');
+    var selectedCourses = $('#selectedCourses');
+
+    if (aiGenerator) aiGenerator.classList.toggle('mode-hidden', mode !== 'ai');
+    if (statsEl) statsEl.classList.toggle('mode-hidden', mode !== 'manual');
+    if (selectedCourses) selectedCourses.classList.toggle('mode-hidden', mode !== 'manual');
+
+    // Update table header title
+    var tableHeader = $('.schedule-course-table .schedule-table-header h2');
+    if (tableHeader) {
+      tableHeader.textContent = mode === 'ai' ? 'انتخاب دروس برای هوش مصنوعی' : 'انتخاب دروس';
+    }
+
+    // Re-render table with appropriate columns
+    buildScheduleTableHeader();
     renderScheduleTable();
   }
 
@@ -1233,6 +1273,12 @@
     renderStats();
     renderSelectedCourses();
     initAiGenerator();
+    // Sub-mode toggle
+    $$('#scheduleSubmode .submode-tab').forEach(function (tab) {
+      tab.addEventListener('click', function () {
+        setScheduleSubMode(tab.dataset.submode);
+      });
+    });
 
     // Click outside timetable blocks to exit edit mode
     var timetableWrapper = $('#timetableWrapper');
@@ -1262,7 +1308,9 @@
       renderTimetableBlocks();
       renderSelectedCourses();
       renderStats();
-      renderAiCourseTags();
+      if (scheduleSubMode === 'ai') {
+        renderAiCourseTags();
+      }
     }
   };
 
@@ -1285,11 +1333,33 @@
     var idx = desiredCourses.indexOf(courseCode);
     if (idx >= 0) {
       desiredCourses.splice(idx, 1);
+
+      // Clean up orphaned exclusions: remove excluded instructors
+      // that only appeared in the removed course
+      var removedInstructors = [];
+      var sections = courseCodeIndex[courseCode] || [];
+      sections.forEach(function (s) {
+        var inst = s['نام استاد'];
+        if (inst && removedInstructors.indexOf(inst) < 0) removedInstructors.push(inst);
+      });
+      removedInstructors.forEach(function (inst) {
+        if (!isExcludedInstructor(inst)) return;
+        var stillUsed = false;
+        desiredCourses.forEach(function (code) {
+          var secs = courseCodeIndex[code] || [];
+          for (var i = 0; i < secs.length; i++) {
+            if (secs[i]['نام استاد'] === inst) { stillUsed = true; break; }
+          }
+        });
+        if (!stillUsed) {
+          excludedInstructors = excludedInstructors.filter(function (n) { return n !== inst; });
+        }
+      });
     } else {
       desiredCourses.push(courseCode);
     }
     renderAiCourseTags();
-    renderScheduleTable(); // Update checkboxes
+    renderScheduleTable(); // Update buttons
   }
 
   function isDesired(courseCode) {
@@ -1307,30 +1377,80 @@
 
     var html = '';
     desiredCourses.forEach(function (code) {
-      // Find course name from allCourses
-      var course = null;
-      for (var i = 0; i < S.allCourses.length; i++) {
-        if (S.allCourses[i]['کد درس'] === code) {
-          course = S.allCourses[i];
-          break;
-        }
+      // Find all sections for this course to get instructor(s)
+      var sections = courseCodeIndex[code] || [];
+      var firstSection = sections.length > 0 ? sections[0] : null;
+      var courseName = firstSection ? firstSection['نام درس'] : code;
+
+      // Collect unique instructor names
+      var instructors = [];
+      sections.forEach(function (s) {
+        var name = s['نام استاد'];
+        if (name && instructors.indexOf(name) < 0) instructors.push(name);
+      });
+
+      html += '<div class="ai-course-card">';
+      html += '<div class="ai-course-card-info">';
+      html += '<span class="ai-course-card-name">' + S.esc(courseName) + '</span>';
+      if (instructors.length > 0) {
+        html += '<div class="ai-course-card-instructors">';
+        instructors.forEach(function (inst) {
+          var excluded = isExcludedInstructor(inst);
+          var cls = excluded ? 'instructor-chip instructor-chip-excluded' : 'instructor-chip';
+          html += '<span class="' + cls + '">';
+          html += S.esc(inst);
+          var icon = excluded ? '↺' : '×';
+          html += '<button class="chip-remove" data-instructor="' + S.escAttr(inst) + '" title="' + (excluded ? 'بازگرداندن استاد' : 'حذف استاد') + '">' + icon + '</button>';
+          html += '</span>';
+        });
+        html += '</div>';
       }
-      var name = course ? course['نام درس'] : code;
-      html += '<span class="ai-course-tag">';
-      html += S.esc(name);
-      html += '<button class="tag-remove" data-code="' + S.escAttr(code) + '" title="حذف">×</button>';
-      html += '</span>';
+      html += '</div>';
+      html += '<div class="ai-course-card-actions">';
+      html += '<button class="btn btn-sm btn-remove" data-code="' + S.escAttr(code) + '" title="حذف درس">×</button>';
+      html += '</div>';
+      html += '</div>';
     });
     container.innerHTML = html;
 
     // Event delegation
     container.onclick = function (e) {
-      var removeBtn = e.target.closest('.tag-remove');
-      if (removeBtn) {
+      var chipRemoveBtn = e.target.closest('.chip-remove');
+      var removeBtn = e.target.closest('.btn-remove');
+      if (chipRemoveBtn) {
+        var inst = chipRemoveBtn.dataset.instructor;
+        if (isExcludedInstructor(inst)) {
+          removeExcludedInstructor(inst);
+        } else {
+          excludeInstructor(inst);
+        }
+      } else if (removeBtn) {
         toggleDesiredCourse(removeBtn.dataset.code);
       }
     };
   }
+
+  // ── Instructor Exclusion ──────────────────────────────────────
+  function excludeInstructor(instructorName) {
+    if (!instructorName || excludedInstructors.indexOf(instructorName) >= 0) return;
+    excludedInstructors.push(instructorName);
+    renderAiCourseTags();
+    // If AI results exist, clear them since exclusions changed
+    hideAiResults();
+  }
+
+  function removeExcludedInstructor(instructorName) {
+    excludedInstructors = excludedInstructors.filter(function (name) {
+      return name !== instructorName;
+    });
+    renderAiCourseTags();
+    hideAiResults();
+  }
+
+  function isExcludedInstructor(instructorName) {
+    return excludedInstructors.indexOf(instructorName) >= 0;
+  }
+
 
   // ── AI Generation ──────────────────────────────────────────────
   function buildAiPayload() {
@@ -1341,7 +1461,10 @@
 
     S.allCourses.forEach(function (c) {
       var code = c['کد درس'];
+      var instructor = c['نام استاد'] || '';
       if (courseGroups[code] && c['زمانبندی تشکیل کلاس']) {
+        // Skip excluded instructors
+        if (excludedInstructors.indexOf(instructor) >= 0) return;
         courseGroups[code].push({
           courseCode: c['کد درس'],
           sectionCode: c['کد ارائه'],
@@ -1353,6 +1476,7 @@
     });
 
     var courses = [];
+    var emptyCourses = [];
     Object.keys(courseGroups).forEach(function (code) {
       var sections = courseGroups[code];
       if (sections.length > 0) {
@@ -1361,12 +1485,20 @@
           courseName: sections[0].courseName,
           sections: sections
         });
+      } else {
+        // Find course name for warning
+        var first = null;
+        for (var i = 0; i < S.allCourses.length; i++) {
+          if (S.allCourses[i]['کد درس'] === code) { first = S.allCourses[i]; break; }
+        }
+        emptyCourses.push(first ? first['نام درس'] : code);
       }
     });
 
     return {
       goal: $('#aiGoal').value,
-      courses: courses
+      courses: courses,
+      emptyCourses: emptyCourses
     };
   }
 
@@ -1382,6 +1514,10 @@
     }
 
     var payload = buildAiPayload();
+    if (payload.emptyCourses && payload.emptyCourses.length > 0) {
+      showAiError('اساتید این دروس حذف شده‌اند و بخشی باقی نمانده: ' + payload.emptyCourses.join('، '));
+      return;
+    }
     if (payload.courses.length === 0) {
       showAiError('درس انتخاب شده زمانبندی ندارند');
       return;

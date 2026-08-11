@@ -152,6 +152,14 @@
 
     <!-- ═══ Schedule Builder Mode ═══ -->
     <div id="scheduleMode" class="schedule-mode mode-hidden">
+      <!-- Sub-mode toggle -->
+      <div class="schedule-submode glass" id="scheduleSubmode">
+        <nav class="submode-switch" role="tablist" aria-label="نوع برنامه‌ساز">
+          <button class="submode-tab active" data-submode="manual" role="tab" aria-selected="true">دستی</button>
+          <button class="submode-tab" data-submode="ai" role="tab" aria-selected="false">هوش مصنوعی</button>
+        </nav>
+      </div>
+
       <!-- Timetable -->
       <div class="timetable-wrapper glass" id="timetableWrapper">
         <div class="timetable-header">
@@ -180,13 +188,13 @@
       </div>
 
       <!-- AI Generator -->
-      <div class="ai-generator glass" id="aiGenerator">
+      <div class="ai-generator glass mode-hidden" id="aiGenerator">
         <div class="ai-header">
-          <h3>تولید برنامه با هوش مصنوعی</h3>
-          <p class="ai-description">دوس مورد نظر خود را انتخاب کنید و برنامه بهینه دریافت کنید</p>
+          <h3>انتخاب دروس برای هوش مصنوعی</h3>
+          <p class="ai-description">دروس مورد نظر خود را انتخاب کنید و برنامه بهینه دریافت کنید</p>
         </div>
 
-        <!-- Selected courses for AI -->
+        <!-- Selected courses for AI (card-based) -->
         <div class="ai-course-list" id="aiCourseList">
           <p class="ai-empty">از جدول زیر دروس مورد نظر خود را انتخاب کنید</p>
         </div>

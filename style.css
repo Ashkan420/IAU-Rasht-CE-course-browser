@@ -1327,8 +1327,8 @@ body {
 }
 
 .btn-added {
-  background: rgba(52, 211, 153, 0.15);
-  border-color: rgba(52, 211, 153, 0.3);
+  background: rgba(52, 211, 153, 0.3);
+  border-color: rgba(52, 211, 153, 0.5);
   color: #34d399;
 }
 
@@ -1724,6 +1724,16 @@ body {
   .ai-tab {
     flex-shrink: 0;
   }
+
+  .ai-course-card {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .ai-course-card-actions {
+    width: 100%;
+    justify-content: flex-end;
+  }
 }
 
 /* ========================================
@@ -1950,6 +1960,161 @@ body {
   color: var(--text-muted);
   font-size: 0.82rem;
   padding: 12px;
+}
+
+/* ========================================
+   Sub-mode Toggle (Manual / AI)
+   ======================================== */
+.schedule-submode {
+  padding: 8px;
+}
+
+.submode-switch {
+  display: flex;
+  gap: 2px;
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: var(--radius-sm);
+  padding: 3px;
+  border: 1px solid var(--glass-border);
+  max-width: 280px;
+  margin: 0 auto;
+}
+
+.submode-tab {
+  flex: 1;
+  padding: 8px 20px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text-secondary);
+  font-family: inherit;
+  font-size: 0.88rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all var(--transition);
+  text-align: center;
+}
+
+.submode-tab:hover {
+  color: var(--text-primary);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.submode-tab.active {
+  background: var(--accent-dim);
+  color: var(--accent);
+  border-color: rgba(255, 255, 255, 0.15);
+}
+
+:root[data-theme="light"] .submode-switch {
+  background: rgba(0, 0, 0, 0.04);
+}
+
+:root[data-theme="light"] .submode-tab:hover {
+  background: rgba(0, 0, 0, 0.05);
+}
+
+:root[data-theme="light"] .submode-tab.active {
+  background: rgba(0, 0, 0, 0.08);
+}
+
+/* ========================================
+   AI Mode Action Buttons
+   ======================================== */
+.btn-ai-add {
+  background: rgba(129, 140, 248, 0.12);
+  border-color: rgba(129, 140, 248, 0.25);
+  color: #a5b4fc;
+}
+
+.btn-ai-add:hover {
+  background: rgba(129, 140, 248, 0.25);
+  border-color: rgba(129, 140, 248, 0.5);
+}
+
+.btn-ai-selected {
+  background: rgba(129, 140, 248, 0.3);
+  border-color: rgba(129, 140, 248, 0.5);
+  color: #a5b4fc;
+}
+
+.btn-ai-selected:hover {
+  background: rgba(239, 68, 68, 0.15);
+  border-color: rgba(239, 68, 68, 0.3);
+  color: var(--danger);
+}
+
+/* ========================================
+   AI Course Cards (replaces simple tags)
+   ======================================== */
+.ai-course-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.ai-course-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 14px;
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-sm);
+  background: var(--btn-bg);
+  animation: chipIn 0.2s ease;
+}
+
+.ai-course-card-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.ai-course-card-name {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.ai-course-card-instructor {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.ai-course-card-actions {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+/* Instructor chips inside course cards */
+.ai-course-card-instructors {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 4px;
+}
+
+.instructor-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 2px 8px;
+  border-radius: 12px;
+  background: var(--chip-bg);
+  border: 1px solid var(--chip-border);
+  color: var(--text-secondary);
+  font-size: 0.72rem;
+  font-weight: 500;
+}
+
+.instructor-chip-excluded {
+  background: rgba(239, 68, 68, 0.1);
+  border-color: rgba(239, 68, 68, 0.25);
+  color: #fca5a5;
 }
 
 /* ========================================
