@@ -1680,7 +1680,7 @@ body {
   }
 
   .tt-block-name { font-size: 0.6rem; }
-  .tt-block-prof { display: none; }
+  .tt-block-prof { font-size: 0.5rem; }
 
   .tt-day-label {
     font-size: 0.6rem;
