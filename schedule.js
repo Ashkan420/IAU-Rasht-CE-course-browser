@@ -1480,88 +1480,92 @@
 
     previewEl.innerHTML = html;
 
-    // Place course blocks
-    if (schedule.courses) {
-      var colorIdx = 0;
-      schedule.courses.forEach(function (entry) {
-        // Find the full course object by sectionCode
-        var course = sectionIndex[entry.sectionCode];
-        if (!course) return;
+    // Defer block placement to next frame so the browser can layout the
+    // hidden timetable and return accurate offsetWidth for positioning.
+    requestAnimationFrame(function () {
+      // Place course blocks
+      if (schedule.courses) {
+        var colorIdx = 0;
+        schedule.courses.forEach(function (entry) {
+          // Find the full course object by sectionCode
+          var course = sectionIndex[entry.sectionCode];
+          if (!course) return;
 
-        var slots = S.parseSchedule(course['زمانبندی تشکیل کلاس']);
-        var color = TIMETABLE_COLORS[colorIdx % TIMETABLE_COLORS.length];
-        colorIdx++;
+          var slots = S.parseSchedule(course['زمانبندی تشکیل کلاس']);
+          var color = TIMETABLE_COLORS[colorIdx % TIMETABLE_COLORS.length];
+          colorIdx++;
 
-        var totalMin = HOURS_COUNT * 60;
-        var gridEndMin = HOURS_END * 60;
+          var totalMin = HOURS_COUNT * 60;
+          var gridEndMin = HOURS_END * 60;
 
-        // Scale factor accounts for the 32px day label column in the overlay
-        var previewOverlayEl = previewEl.querySelector('.tt-overlay');
-        var dayLabelWidth = 32;
-        var scaleFactor = previewOverlayEl ? (previewOverlayEl.offsetWidth - dayLabelWidth) / previewOverlayEl.offsetWidth : 1;
+          // Scale factor accounts for the 32px day label column in the overlay
+          var previewOverlayEl = previewEl.querySelector('.tt-overlay');
+          var dayLabelWidth = 32;
+          var scaleFactor = previewOverlayEl ? (previewOverlayEl.offsetWidth - dayLabelWidth) / previewOverlayEl.offsetWidth : 1;
 
-        // Group by day for hatch rendering
-        var slotsByDay = {};
-        slots.forEach(function (slot) {
-          if (!slotsByDay[slot.day]) slotsByDay[slot.day] = [];
-          slotsByDay[slot.day].push(slot);
-        });
-
-        Object.keys(slotsByDay).forEach(function (day) {
-          var daySlots = slotsByDay[day];
-          var dayRow = previewEl.querySelector('.tt-row[data-day="' + day + '"]');
-          if (!dayRow) return;
-          var overlay = dayRow.querySelector('.tt-overlay');
-          if (!overlay) return;
-
-          daySlots.sort(function (a, b) {
-            return S.timeToMinutes(a.start) - S.timeToMinutes(b.start);
+          // Group by day for hatch rendering
+          var slotsByDay = {};
+          slots.forEach(function (slot) {
+            if (!slotsByDay[slot.day]) slotsByDay[slot.day] = [];
+            slotsByDay[slot.day].push(slot);
           });
 
-          daySlots.forEach(function (slot) {
-            var endMin = S.timeToMinutes(slot.end);
-            var dur = endMin - S.timeToMinutes(slot.start);
+          Object.keys(slotsByDay).forEach(function (day) {
+            var daySlots = slotsByDay[day];
+            var dayRow = previewEl.querySelector('.tt-row[data-day="' + day + '"]');
+            if (!dayRow) return;
+            var overlay = dayRow.querySelector('.tt-overlay');
+            if (!overlay) return;
 
-            var block = document.createElement('div');
-            block.className = 'tt-block';
-            block.style.left = ((gridEndMin - endMin) / totalMin * 100 * scaleFactor) + '%';
-            block.style.width = (dur / totalMin * 100 * scaleFactor) + '%';
-            block.style.background = color.bg;
-            block.style.borderColor = color.border;
-            block.style.color = color.text;
+            daySlots.sort(function (a, b) {
+              return S.timeToMinutes(a.start) - S.timeToMinutes(b.start);
+            });
 
-            block.title = slot.start + ' – ' + slot.end;
-            block.innerHTML =
-              '<span class="tt-block-name">' + S.esc(course['نام درس']) + '</span>';
+            daySlots.forEach(function (slot) {
+              var endMin = S.timeToMinutes(slot.end);
+              var dur = endMin - S.timeToMinutes(slot.start);
 
-            // Scale font size based on block duration
-            var nameSize = Math.min(0.8, Math.max(0.55, 0.55 + dur / 300 * 0.25));
-            block.querySelector('.tt-block-name').style.fontSize = nameSize + 'rem';
+              var block = document.createElement('div');
+              block.className = 'tt-block';
+              block.style.left = ((gridEndMin - endMin) / totalMin * 100 * scaleFactor) + '%';
+              block.style.width = (dur / totalMin * 100 * scaleFactor) + '%';
+              block.style.background = color.bg;
+              block.style.borderColor = color.border;
+              block.style.color = color.text;
 
-            overlay.appendChild(block);
-          });
+              block.title = slot.start + ' – ' + slot.end;
+              block.innerHTML =
+                '<span class="tt-block-name">' + S.esc(course['نام درس']) + '</span>';
 
-          // Hatched connectors
-          for (var j = 0; j < daySlots.length - 1; j++) {
-            var gapStart = S.timeToMinutes(daySlots[j].end);
-            var gapEnd = S.timeToMinutes(daySlots[j + 1].start);
-            var gapDur = gapEnd - gapStart;
-            if (gapDur > 0) {
-              var hatch = document.createElement('div');
-              hatch.className = 'tt-hatch';
-              hatch.style.left = ((gridEndMin - gapEnd) / totalMin * 100 * scaleFactor) + '%';
-              hatch.style.width = (gapDur / totalMin * 100 * scaleFactor) + '%';
-              overlay.appendChild(hatch);
+              // Scale font size based on block duration
+              var nameSize = Math.min(0.8, Math.max(0.55, 0.55 + dur / 300 * 0.25));
+              block.querySelector('.tt-block-name').style.fontSize = nameSize + 'rem';
+
+              overlay.appendChild(block);
+            });
+
+            // Hatched connectors
+            for (var j = 0; j < daySlots.length - 1; j++) {
+              var gapStart = S.timeToMinutes(daySlots[j].end);
+              var gapEnd = S.timeToMinutes(daySlots[j + 1].start);
+              var gapDur = gapEnd - gapStart;
+              if (gapDur > 0) {
+                var hatch = document.createElement('div');
+                hatch.className = 'tt-hatch';
+                hatch.style.left = ((gridEndMin - gapEnd) / totalMin * 100 * scaleFactor) + '%';
+                hatch.style.width = (gapDur / totalMin * 100 * scaleFactor) + '%';
+                overlay.appendChild(hatch);
+              }
             }
-          }
+          });
         });
-      });
-    }
+      }
 
-    // Summary
-    if (schedule.summary) {
-      previewEl.innerHTML += '<div style="text-align:center;padding:8px;color:var(--text-muted);font-size:0.8rem;">' + S.esc(schedule.summary) + '</div>';
-    }
+      // Summary
+      if (schedule.summary) {
+        previewEl.innerHTML += '<div style="text-align:center;padding:8px;color:var(--text-muted);font-size:0.8rem;">' + S.esc(schedule.summary) + '</div>';
+      }
+    });
   }
 
   function loadAiSchedule() {
