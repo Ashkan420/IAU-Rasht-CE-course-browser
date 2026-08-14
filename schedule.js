@@ -40,6 +40,37 @@
   var colorMap = {};         // courseCode -> color index
   var nextColor = 0;
 
+  // ── Persistence ───────────────────────────────────────────────
+  var STORAGE_KEY = 'iau-selected-courses';
+
+  function saveScheduleState() {
+    try {
+      var codes = selectedSections.map(function (c) { return c['کد درس']; });
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(codes));
+    } catch (e) {
+      // localStorage full or unavailable — silently ignore
+    }
+  }
+
+  function loadScheduleState() {
+    try {
+      var raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) return [];
+      var codes = JSON.parse(raw);
+      if (!Array.isArray(codes)) return [];
+      var restored = [];
+      codes.forEach(function (code) {
+        var sections = courseCodeIndex[code];
+        if (sections && sections.length > 0) {
+          restored.push(sections[0]);
+        }
+      });
+      return restored;
+    } catch (e) {
+      return [];
+    }
+  }
+
   // ── Sub-mode State ────────────────────────────────────────────
   var scheduleSubMode = 'manual'; // 'manual' | 'ai'
   var excludedInstructors = [];   // Array of instructor names to exclude from AI
@@ -590,6 +621,7 @@
     }
 
     exitEditMode();
+    saveScheduleState();
     updateAll();
     showToast('گروه درس تغییر کرد', 'info');
   }
@@ -646,6 +678,7 @@
 
     // Exit edit mode when adding a course from the table
     if (editMode) exitEditMode();
+    saveScheduleState();
     updateAll();
   }
 
@@ -678,6 +711,7 @@
       editPairedCode = null;
       editCurrentSection = null;
     }
+    saveScheduleState();
     updateAll();
   }
 
@@ -794,6 +828,7 @@
             // Re-add old section and its pair
             if (current) selectedSections.push(current);
             if (pairedOld) selectedSections.push(pairedOld);
+            saveScheduleState();
             updateAll();
           } else {
             selectedSections.push(newSection);
@@ -805,6 +840,7 @@
                 selectedSections.push(pairedNew);
               }
             }
+            saveScheduleState();
             updateAll();
           }
         }
@@ -1180,11 +1216,17 @@
   // ── Initialize schedule mode ───────────────────────────────────
   function initScheduleMode() {
     buildIndex();
+    // Restore saved schedule (if any)
+    var saved = loadScheduleState();
+    if (saved.length > 0) {
+      selectedSections = saved;
+    }
     buildTimetable();
     buildScheduleTableHeader();
     renderScheduleTable();
     renderStats();
     renderSelectedCourses();
+    renderTimetableBlocks();
     initAiGenerator();
     // Sub-mode toggle
     $$('#scheduleSubmode .submode-tab').forEach(function (tab) {
@@ -1207,6 +1249,16 @@
   // ── Callbacks ──────────────────────────────────────────────────
   S.onCoursesLoaded = function () {
     buildIndex();
+    // Restore schedule if we're in schedule mode
+    if (S.getCurrentMode() === 'schedule') {
+      var saved = loadScheduleState();
+      if (saved.length > 0) {
+        selectedSections = saved;
+        renderTimetableBlocks();
+        renderSelectedCourses();
+        renderStats();
+      }
+    }
     buildScheduleTableHeader();
     renderScheduleTable();
   };
@@ -1630,6 +1682,7 @@
       }
     });
 
+    saveScheduleState();
     updateAll();
     showToast('برنامه بارگذاری شد', 'info');
   }
