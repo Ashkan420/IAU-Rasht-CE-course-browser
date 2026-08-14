@@ -200,16 +200,23 @@
           <p class="ai-empty">از جدول زیر دروس مورد نظر خود را انتخاب کنید</p>
         </div>
 
-        <!-- Goal selector -->
+        <!-- Goal selector + custom comments -->
         <div class="ai-goal-section">
-          <label for="aiGoal">هدف بهینه‌سازی:</label>
-          <select id="aiGoal" class="semester-select">
-            <option value="min-days">کمترین روز حضور</option>
-            <option value="min-gap">کمترین فاصله بین کلاس‌ها</option>
-            <option value="late-start">دیرترین شروع صبح</option>
-            <option value="early-end">زودترین پایان روز</option>
-            <option value="balanced">برنامه متعادل</option>
-          </select>
+          <div class="ai-goal-row">
+            <label for="aiGoal">هدف بهینه‌سازی:</label>
+            <select id="aiGoal" class="semester-select">
+              <option value="min-days">کمترین روز حضور</option>
+              <option value="min-gap">کمترین فاصله بین کلاس‌ها</option>
+              <option value="late-start">دیرترین شروع صبح</option>
+              <option value="early-end">زودترین پایان روز</option>
+              <option value="balanced">برنامه متعادل</option>
+              <option value="custom">دلخواه</option>
+            </select>
+          </div>
+          <div class="ai-comments-row mode-hidden" id="aiCommentsRow">
+            <label for="aiComments">توضیح برنامه:</label>
+            <textarea id="aiComments" rows="2" placeholder="مثال: کلاس قبل از ساعت ۱۰ نباشد، سه‌شنبه کلاس نداشته باشم..."></textarea>
+          </div>
         </div>
 
         <!-- Generate button -->

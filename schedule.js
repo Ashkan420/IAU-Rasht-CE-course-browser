@@ -1299,9 +1299,10 @@
       var firstSection = sections.length > 0 ? sections[0] : null;
       var courseName = firstSection ? firstSection['نام درس'] : code;
 
-      // Collect unique instructor names
+      // Collect unique instructor names (filtered by gender for عمومی courses)
       var instructors = [];
       sections.forEach(function (s) {
+        if (!S.genderMatches(s, S.currentGender)) return;
         var name = s['نام استاد'];
         if (name && instructors.indexOf(name) < 0) instructors.push(name);
       });
@@ -1382,6 +1383,8 @@
       if (courseGroups[code] && c['زمانبندی تشکیل کلاس']) {
         // Skip excluded instructors
         if (excludedInstructors.indexOf(instructor) >= 0) return;
+        // For عمومی courses, only include sections matching the selected gender
+        if (!S.genderMatches(c, S.currentGender)) return;
         courseGroups[code].push({
           courseCode: c['کد درس'],
           sectionCode: c['کد ارائه'],
@@ -1415,7 +1418,8 @@
     return {
       goal: $('#aiGoal').value,
       courses: courses,
-      emptyCourses: emptyCourses
+      emptyCourses: emptyCourses,
+      comments: ($('#aiComments') || {}).value || ''
     };
   }
 
@@ -1638,12 +1642,25 @@
   function initAiGenerator() {
     var btnGenerate = $('#btnGenerate');
     var btnLoad = $('#btnLoadSchedule');
+    var aiGoal = $('#aiGoal');
+    var aiCommentsRow = $('#aiCommentsRow');
 
     if (btnGenerate) {
       btnGenerate.addEventListener('click', generateSchedule);
     }
     if (btnLoad) {
       btnLoad.addEventListener('click', loadAiSchedule);
+    }
+
+    // Show/hide comments textarea based on goal selection
+    function toggleCommentsRow() {
+      if (aiCommentsRow) {
+        aiCommentsRow.classList.toggle('mode-hidden', aiGoal.value !== 'custom');
+      }
+    }
+    if (aiGoal) {
+      aiGoal.addEventListener('change', toggleCommentsRow);
+      toggleCommentsRow(); // init on load
     }
 
     renderAiCourseTags();
