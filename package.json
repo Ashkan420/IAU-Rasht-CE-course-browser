@@ -1,0 +1,22 @@
+{
+  "name": "pages",
+  "version": "1.0.0",
+  "description": "یک ابزار ساده و سریع برای جستجو، فیلتر و مشاهده دروس دانشگاه آزاد واحد رشت (گروه کامپیوتر).",
+  "main": "app.js",
+  "scripts": {
+    "test": "vitest run"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Ashkan420/IAU-Rasht-CE-course-browser.git"
+  },
+  "keywords": [],
+  "type": "module",
+  "bugs": {
+    "url": "https://github.com/Ashkan420/IAU-Rasht-CE-course-browser/issues"
+  },
+  "homepage": "https://github.com/Ashkan420/IAU-Rasht-CE-course-browser#readme",
+  "devDependencies": {
+    "vitest": "^4.1.10"
+  }
+}
