@@ -101,24 +101,43 @@
     return colorMap[courseCode];
   }
 
+  function findSelectedCourse(courseCode) {
+    for (var i = 0; i < selectedSections.length; i++) {
+      if (selectedSections[i]['کد درس'] === courseCode) {
+        return selectedSections[i];
+      }
+    }
+    return null;
+  }
+
   // ── Timetable ──────────────────────────────────────────────────
+  function renderHatchConnectors(slots, overlay, scaleFactor, className, opacity) {
+    for (var j = 0; j < slots.length - 1; j++) {
+      var gapStart = S.timeToMinutes(slots[j].end);
+      var gapEnd = S.timeToMinutes(slots[j + 1].start);
+      var gapDur = gapEnd - gapStart;
+      if (gapDur > 0) {
+        var hatch = document.createElement('div');
+        hatch.className = className || 'tt-hatch';
+        hatch.style.left = S.timetableLeftPct(gapEnd, scaleFactor) + '%';
+        hatch.style.width = S.timetableWidthPct(gapDur, scaleFactor) + '%';
+        if (opacity) hatch.style.opacity = opacity;
+        overlay.appendChild(hatch);
+      }
+    }
+  }
   var QUARTER_COLS = HOURS_COUNT * 4; // 60 columns (15min each)
 
-  function buildTimetable() {
-    var timetable = $('#timetable');
-    if (!timetable) return;
-
-    var html = '';
-
+  function buildTimetableHtml(container) {
+    var html = '<div class="timetable">';
     // Header row: hours reversed (21→07), day label at end (right side)
     html += '<div class="tt-row tt-header">';
     for (var hi = 0; hi < HOURS_COUNT; hi++) {
-      var hour = HOURS_END - 1 - hi; // 21, 20, 19, ..., 07
+      var hour = HOURS_END - 1 - hi;
       html += '<div class="tt-cell tt-hour">' + S.minutesToTime(hour * 60) + '</div>';
     }
     html += '<div class="tt-cell tt-day-label tt-header-day">روز</div>';
     html += '</div>';
-
     // Day rows: 60 quarter-cells, day label at end (right), overlay on left
     S.DAY_ORDER.forEach(function (day) {
       html += '<div class="tt-row" data-day="' + day + '">';
@@ -132,8 +151,14 @@
       html += '<div class="tt-overlay"></div>';
       html += '</div>';
     });
+    html += '</div>';
+    container.innerHTML = html;
+  }
 
-    timetable.innerHTML = html;
+  function buildTimetable() {
+    var timetable = $('#timetable');
+    if (!timetable) return;
+    buildTimetableHtml(timetable);
   }
 
   function renderTimetableBlocks() {
@@ -241,22 +266,8 @@
         });
 
         // Render hatched connectors between consecutive blocks
-        for (var j = 0; j < daySlots.length - 1; j++) {
-          var gapStart = S.timeToMinutes(daySlots[j].end);
-          var gapEnd = S.timeToMinutes(daySlots[j + 1].start);
-          var gapDuration = gapEnd - gapStart;
-
-          if (gapDuration > 0) {
-            var hatch = document.createElement('div');
-            hatch.className = 'tt-hatch';
-            hatch.style.left = S.timetableLeftPct(gapEnd, scaleFactor) + '%';
-            hatch.style.width = S.timetableWidthPct(gapDuration, scaleFactor) + '%';
-            if (editMode && !isEditedCourse) {
-              hatch.style.opacity = '0.15';
-            }
-            overlay.appendChild(hatch);
-          }
-        }
+        var hatchOpacity = (editMode && !isEditedCourse) ? '0.15' : null;
+        renderHatchConnectors(daySlots, overlay, scaleFactor, 'tt-hatch', hatchOpacity);
       });
     });
 
@@ -307,13 +318,7 @@
 
   // ── Edit Mode (click-to-swap) ──────────────────────────────────
   function enterEditMode(courseCode) {
-    var current = null;
-    for (var i = 0; i < selectedSections.length; i++) {
-      if (selectedSections[i]['کد درس'] === courseCode) {
-        current = selectedSections[i];
-        break;
-      }
-    }
+    var current = findSelectedCourse(courseCode);
     if (!current) return;
 
     var paired = findPairedCourse(current);
@@ -370,17 +375,9 @@
     });
 
     // For عمومی courses, filter by gender
-    if (editCurrentSection['نوع واحد'] === 'عمومی' && currentGender && currentGender !== 'همه') {
+    if (currentGender && currentGender !== 'همه') {
       alternatives = alternatives.filter(function (s) {
-        var gender = (s['جنسیت'] || '').trim();
-        var className = (s['نام کلاس'] || '').trim();
-        if (currentGender === 'خواهران') {
-          return gender === 'زن' || className.includes('خواهران');
-        }
-        if (currentGender === 'برادران') {
-          return gender === 'مرد' || className.includes('برادران');
-        }
-        return true;
+        return S.genderMatches(s, currentGender);
       });
     }
 
@@ -388,13 +385,7 @@
     var pairedAlternatives = [];
     if (editPairedCode) {
       var pairedSections = courseCodeIndex[editPairedCode] || [];
-      var currentPaired = null;
-      for (var i = 0; i < selectedSections.length; i++) {
-        if (selectedSections[i]['کد درس'] === editPairedCode) {
-          currentPaired = selectedSections[i];
-          break;
-        }
-      }
+      var currentPaired = findSelectedCourse(editPairedCode);
       if (currentPaired) {
         pairedAlternatives = pairedSections.filter(function (s) {
           return s['کد ارائه'] !== currentPaired['کد ارائه'];
@@ -535,20 +526,9 @@
         return S.timeToMinutes(a.slot.start) - S.timeToMinutes(b.slot.start);
       });
 
-      // Render green hatches between consecutive ghosts (same as grey hatch logic)
-      for (var j = 0; j < group.length - 1; j++) {
-        var gapStart = S.timeToMinutes(group[j].slot.end);
-        var gapEnd = S.timeToMinutes(group[j + 1].slot.start);
-        var gapDur = gapEnd - gapStart;
-
-        if (gapDur > 0) {
-          var hatch = document.createElement('div');
-          hatch.className = 'tt-hatch-green';
-          hatch.style.left = S.timetableLeftPct(gapEnd, scaleFactor) + '%';
-          hatch.style.width = S.timetableWidthPct(gapDur, scaleFactor) + '%';
-          overlay.appendChild(hatch);
-        }
-      }
+      // Render green hatches between consecutive ghosts
+      var ghostSlots = group.map(function (g) { return g.slot; });
+      renderHatchConnectors(ghostSlots, overlay, scaleFactor, 'tt-hatch-green');
     });
   }
 
@@ -564,12 +544,10 @@
     var found = null;
     for (var i = 0; i < selectedSections.length; i++) {
       if (selectedSections[i]['کد درس'] === paired['کد درس']) {
-        // Prefer the exact matching section code
         if (selectedSections[i]['کد ارائه'] === paired['کد ارائه']) {
           found = selectedSections[i];
           break;
         }
-        // Otherwise keep as fallback
         if (!found) found = selectedSections[i];
       }
     }
@@ -720,24 +698,11 @@
     if (!sections || sections.length <= 1) return;
 
     // Build alternatives list
-    var currentSection = null;
-    for (var i = 0; i < selectedSections.length; i++) {
-      if (selectedSections[i]['کد درس'] === courseCode) {
-        currentSection = selectedSections[i];
-        break;
-      }
-    }
+    var currentSection = findSelectedCourse(courseCode);
 
     var alternatives = sections.filter(function (s) {
       if (currentSection && s['کد ارائه'] === currentSection['کد ارائه']) return false;
-      // Filter عمومی by gender
-      if (s['نوع واحد'] === 'عمومی' && currentGender && currentGender !== 'همه') {
-        var gender = (s['جنسیت'] || '').trim();
-        var className = (s['نام کلاس'] || '').trim();
-        if (currentGender === 'خواهران' && gender !== 'زن' && !className.includes('خواهران')) return false;
-        if (currentGender === 'برادران' && gender !== 'مرد' && !className.includes('برادران')) return false;
-      }
-      return true;
+      return S.genderMatches(s, currentGender);
     });
 
     if (alternatives.length === 0) {
@@ -1093,21 +1058,7 @@
     });
 
     var rows = filtered.map(function (c) {
-      var cells = '';
-      S.tableColumns.forEach(function (col) {
-        if (SCHEDULE_HIDDEN_COLS.has(col)) return;
-        var val = c[col] || '';
-        var cls = S.LONG_COLS.has(col) ? ' class="col-long"' :
-                  S.CENTER_COLS.has(col) ? ' class="col-center"' : '';
-        var title = S.LONG_COLS.has(col) ? ' title="' + escAttr(val) + '"' : '';
-        if (col === 'نوع واحد') {
-          var badgeClass = val === 'عمومی' ? 'badge-general' : 'badge-specialized';
-          val = '<span class="badge ' + badgeClass + '">' + esc(val) + '</span>';
-        } else {
-          val = esc(val);
-        }
-        cells += '<td' + cls + title + '>' + val + '</td>';
-      });
+      var cells = S.renderCourseCells(c, S.tableColumns, SCHEDULE_HIDDEN_COLS);
 
       // Action cell — content depends on sub-mode
       var sectionCode = c['کد ارائه'];
@@ -1555,32 +1506,8 @@
     var schedule = aiResults[selectedAiSchedule];
     if (!schedule) return;
 
-    // Build a mini timetable (same as main: RTL, 60 cols + overlay)
-    var html = '<div class="timetable">';
-    // Header: reversed hours (21→07), day label at end
-    html += '<div class="tt-row tt-header">';
-    for (var hi = 0; hi < HOURS_COUNT; hi++) {
-      var hour = HOURS_END - 1 - hi;
-      html += '<div class="tt-cell tt-hour">' + S.minutesToTime(hour * 60) + '</div>';
-    }
-    html += '<div class="tt-cell tt-day-label tt-header-day">روز</div>';
-    html += '</div>';
-    // Day rows: 60 cells, day label at end, overlay on left
-    S.DAY_ORDER.forEach(function (day) {
-      html += '<div class="tt-row" data-day="' + day + '">';
-      for (var q = 0; q < QUARTER_COLS; q++) {
-        var cls = 'tt-cell tt-slot';
-        if (q % 4 === 0) cls += ' tt-hour-mark';
-        else if (q % 4 === 2) cls += ' tt-half-mark';
-        html += '<div class="' + cls + '"></div>';
-      }
-      html += '<div class="tt-cell tt-day-label">' + day + '</div>';
-      html += '<div class="tt-overlay"></div>';
-      html += '</div>';
-    });
-    html += '</div>';
-
-    previewEl.innerHTML = html;
+    // Build a mini timetable using shared helper
+    buildTimetableHtml(previewEl);
 
     // Defer block placement to next frame so the browser can layout the
     // hidden timetable and return accurate offsetWidth for positioning.
@@ -1641,18 +1568,7 @@
             });
 
             // Hatched connectors
-            for (var j = 0; j < daySlots.length - 1; j++) {
-              var gapStart = S.timeToMinutes(daySlots[j].end);
-              var gapEnd = S.timeToMinutes(daySlots[j + 1].start);
-              var gapDur = gapEnd - gapStart;
-              if (gapDur > 0) {
-                var hatch = document.createElement('div');
-                hatch.className = 'tt-hatch';
-                hatch.style.left = S.timetableLeftPct(gapEnd, scaleFactor) + '%';
-                hatch.style.width = S.timetableWidthPct(gapDur, scaleFactor) + '%';
-                overlay.appendChild(hatch);
-              }
-            }
+            renderHatchConnectors(daySlots, overlay, scaleFactor, 'tt-hatch');
           });
         });
       }

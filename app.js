@@ -118,9 +118,6 @@
       S.buildTableHeader();
       S.applyFilters();
     };
-    S.onModeChange = function (mode) {
-      // schedule.js registers its own handler via the array
-    };
 
     S.restoreFromUrl();
 
@@ -139,18 +136,7 @@
         S.activeFilters = [];
         S.currentCategory = 'همه';
         S.currentGender = 'همه';
-        $$('.cat-btn').forEach((b) => {
-          b.classList.remove('active');
-          b.setAttribute('aria-pressed', 'false');
-        });
-        $$('.cat-btn[data-cat="همه"]').forEach((b) => {
-          b.classList.add('active');
-          b.setAttribute('aria-pressed', 'true');
-        });
-        $$('.cat-btn[data-gender="همه"]').forEach((b) => {
-          b.classList.add('active');
-          b.setAttribute('aria-pressed', 'true');
-        });
+        S.resetFilterButtons();
         $$('.btn-add').forEach((btn) => btn.classList.remove('visible'));
         S.loadCourses(semesterSelect.value);
       });
@@ -231,18 +217,7 @@
         S.sortField = null;
         S.sortDir = 'asc';
 
-        $$('.cat-btn').forEach((b) => {
-          b.classList.remove('active');
-          b.setAttribute('aria-pressed', 'false');
-        });
-        $$('.cat-btn[data-cat="همه"]').forEach((b) => {
-          b.classList.add('active');
-          b.setAttribute('aria-pressed', 'true');
-        });
-        $$('.cat-btn[data-gender="همه"]').forEach((b) => {
-          b.classList.add('active');
-          b.setAttribute('aria-pressed', 'true');
-        });
+        S.resetFilterButtons();
 
         $$('.search-field input').forEach((input) => {
           input.value = '';

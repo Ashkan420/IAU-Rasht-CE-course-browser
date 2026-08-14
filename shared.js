@@ -81,9 +81,9 @@
 
   function formatJalaliDate(dateStr) {
     const [y, m, d] = dateStr.split('-').map(Number);
-    const jd = toJalali(y, m, d);
+    const jalali = toJalali(y, m, d);
     const months = ['فروردین', 'اردیبهشت', 'خرداد', 'تیر', 'مرداد', 'شهریور', 'مهر', 'آبان', 'آذر', 'دی', 'بهمن', 'اسفند'];
-    return `${jd.jd} ${months[jd.jm - 1]} ${jd.jy}`;
+    return `${jalali.jd} ${months[jalali.jm - 1]} ${jalali.jy}`;
   }
 
   // ── Load semesters ─────────────────────────────────────────────
@@ -122,20 +122,17 @@
 
       if (data.دروس && Array.isArray(data.دروس)) {
         allCourses = data.دروس;
-        if (allCourses.length > 0) {
-          tableColumns = Object.keys(allCourses[0]);
-        }
         const updateDateEl = $('#updateDate');
         if (data['تاریخ به‌روزرسانی'] && updateDateEl) {
           updateDateEl.textContent = `آخرین به‌روزرسانی: ${formatJalaliDate(data['تاریخ به‌روزرسانی'])}`;
         }
       } else {
         allCourses = data;
-        if (allCourses.length > 0) {
-          tableColumns = Object.keys(allCourses[0]);
-        }
         const updateDateEl = $('#updateDate');
         if (updateDateEl) updateDateEl.textContent = '';
+      }
+      if (allCourses.length > 0) {
+        tableColumns = Object.keys(allCourses[0]);
       }
     } catch (err) {
       console.error('Failed to load courses:', err);
@@ -161,6 +158,16 @@
     return cell === q;
   }
 
+  function genderMatches(course, gender) {
+    if (!gender || gender === 'همه') return true;
+    if ((course['نوع واحد'] || '').trim() === 'تخصصی') return true;
+    var g = (course['جنسیت'] || '').trim();
+    var cn = (course['نام کلاس'] || '').trim();
+    if (gender === 'خواهران') return g === 'زن' || cn.includes('خواهران');
+    if (gender === 'برادران') return g === 'مرد' || cn.includes('برادران');
+    return true;
+  }
+
   function applyFilters() {
     let result = allCourses;
 
@@ -169,19 +176,7 @@
     }
 
     if (currentCategory !== 'تخصصی' && currentGender !== 'همه') {
-      result = result.filter((c) => {
-        const gender = (c['جنسیت'] || '').trim();
-        const className = (c['نام کلاس'] || '').trim();
-        const unitType = (c['نوع واحد'] || '').trim();
-        if (unitType === 'تخصصی') return true;
-        if (currentGender === 'خواهران') {
-          return gender === 'زن' || className.includes('خواهران');
-        }
-        if (currentGender === 'برادران') {
-          return gender === 'مرد' || className.includes('برادران');
-        }
-        return true;
-      });
+      result = result.filter((c) => genderMatches(c, currentGender));
     }
 
     const grouped = {};
@@ -285,6 +280,23 @@
   }
 
   // ── Table Rendering ────────────────────────────────────────────
+  function renderCourseCells(course, columns, excludeCols) {
+    excludeCols = excludeCols || new Set();
+    return columns
+      .filter(function (col) { return !excludeCols.has(col); })
+      .map(function (col) {
+        var val = course[col] || '';
+        var cls = LONG_COLS.has(col) ? ' class="col-long"' : CENTER_COLS.has(col) ? ' class="col-center"' : '';
+        var title = LONG_COLS.has(col) ? ' title="' + escAttr(val) + '"' : '';
+        if (col === 'نوع واحد') {
+          var badgeClass = val === 'عمومی' ? 'badge-general' : 'badge-specialized';
+          val = '<span class="badge ' + badgeClass + '">' + esc(val) + '</span>';
+        } else {
+          val = esc(val);
+        }
+        return '<td' + cls + title + '>' + val + '</td>';
+      }).join('');
+  }
   function renderTable() {
     const tableBody = $('#courseTableBody');
     if (!tableBody) return;
@@ -295,18 +307,7 @@
     }
 
     const rows = filteredCourses.map((c) => {
-      const cells = tableColumns.map((col) => {
-        let val = c[col] || '';
-        const cls = LONG_COLS.has(col) ? ' class="col-long"' : CENTER_COLS.has(col) ? ' class="col-center"' : '';
-        const title = LONG_COLS.has(col) ? ` title="${escAttr(val)}"` : '';
-        if (col === 'نوع واحد') {
-          const badgeClass = val === 'عمومی' ? 'badge-general' : 'badge-specialized';
-          val = `<span class="badge ${badgeClass}">${esc(val)}</span>`;
-        } else {
-          val = esc(val);
-        }
-        return `<td${cls}${title}>${val}</td>`;
-      }).join('');
+      const cells = renderCourseCells(c, tableColumns);
       return `<tr>${cells}</tr>`;
     });
 
@@ -372,18 +373,7 @@
     sortField = null;
     sortDir = 'asc';
 
-    $$('.cat-btn').forEach((b) => {
-      b.classList.remove('active');
-      b.setAttribute('aria-pressed', 'false');
-    });
-    $$('.cat-btn[data-cat="همه"]').forEach((b) => {
-      b.classList.add('active');
-      b.setAttribute('aria-pressed', 'true');
-    });
-    $$('.cat-btn[data-gender="همه"]').forEach((b) => {
-      b.classList.add('active');
-      b.setAttribute('aria-pressed', 'true');
-    });
+    resetFilterButtons();
 
     const hash = window.location.hash.slice(1);
     if (!hash) return;
@@ -462,6 +452,17 @@
   function hideAddButton(field) {
     const btn = $(`.btn-add[data-field="${field}"]`);
     if (btn) btn.classList.remove('visible');
+  }
+
+  function resetFilterButtons() {
+    $$('.cat-btn').forEach((b) => {
+      b.classList.remove('active');
+      b.setAttribute('aria-pressed', 'false');
+    });
+    $$('.cat-btn[data-cat="همه"], .cat-btn[data-gender="همه"]').forEach((b) => {
+      b.classList.add('active');
+      b.setAttribute('aria-pressed', 'true');
+    });
   }
 
   // ── Mode Switching ─────────────────────────────────────────────
@@ -564,7 +565,7 @@
     return (durationMinutes / TT_TOTAL_MIN) * 100 * scaleFactor;
   }
 
-  // ── Callback hooks (set by mode-specific JS) ──────────────────
+  // ── Callback hooks (setters push to arrays, not replace) ───────
   var _coursesLoadedCallbacks = [];
   var _modeChangeCallbacks = [];
   var _filtersChangedCallbacks = [];
@@ -615,10 +616,12 @@
     applyFilters,
     applySort,
     matchField,
+    genderMatches,
 
     // Rendering
     buildTableHeader,
     renderTable,
+    renderCourseCells,
     renderChips,
     updateCount,
 
@@ -630,6 +633,7 @@
     addFilter,
     showAddButton,
     hideAddButton,
+    resetFilterButtons,
 
     // Mode
     switchMode,
