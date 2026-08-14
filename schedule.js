@@ -112,20 +112,7 @@
     // Remove old blocks, hatches, ghost blocks, and green hatches
     timetable.querySelectorAll('.tt-block, .tt-hatch, .tt-ghost, .tt-hatch-green').forEach(function (el) { el.remove(); });
 
-    var totalMin = HOURS_COUNT * 60;
-    var gridEndMin = HOURS_END * 60; // 22:00 in absolute minutes
-
-    // RTL block positioning: offset from grid end (21:00 = left edge)
-    // Scale factor accounts for the 32px day label column in the overlay
-    var overlayEl = timetable.querySelector('.tt-overlay');
-    var dayLabelWidth = 32;
-    var scaleFactor = overlayEl ? (overlayEl.offsetWidth - dayLabelWidth) / overlayEl.offsetWidth : 1;
-    function rtlLeftPct(endMinutes) {
-      return ((gridEndMin - endMinutes) / totalMin) * 100 * scaleFactor;
-    }
-    function widthPct(durationMinutes) {
-      return (durationMinutes / totalMin) * 100 * scaleFactor;
-    }
+    var scaleFactor = S.timetableScaleFactor(timetable.querySelector('.tt-overlay'));
 
     selectedSections.forEach(function (course) {
       var slots = S.parseSchedule(course['زمانبندی تشکیل کلاس']);
@@ -165,8 +152,8 @@
 
           var block = document.createElement('div');
           block.className = 'tt-block';
-          block.style.left = rtlLeftPct(endMin) + '%';
-          block.style.width = widthPct(dur) + '%';
+          block.style.left = S.timetableLeftPct(endMin, scaleFactor) + '%';
+          block.style.width = S.timetableWidthPct(dur, scaleFactor) + '%';
           block.style.background = color.bg;
           block.style.borderColor = color.border;
           block.style.color = color.text;
@@ -231,8 +218,8 @@
           if (gapDuration > 0) {
             var hatch = document.createElement('div');
             hatch.className = 'tt-hatch';
-            hatch.style.left = rtlLeftPct(gapEnd) + '%';
-            hatch.style.width = widthPct(gapDuration) + '%';
+            hatch.style.left = S.timetableLeftPct(gapEnd, scaleFactor) + '%';
+            hatch.style.width = S.timetableWidthPct(gapDuration, scaleFactor) + '%';
             if (editMode && !isEditedCourse) {
               hatch.style.opacity = '0.15';
             }
@@ -422,18 +409,7 @@
     timetable.querySelectorAll('.tt-ghost').forEach(function (el) { el.remove(); });
 
     var ghosts = computeAvailableSlots();
-    var totalMin = HOURS_COUNT * 60;
-    var gridEndMin = HOURS_END * 60;
-
-    var overlayEl = timetable.querySelector('.tt-overlay');
-    var dayLabelWidth = 32;
-    var scaleFactor = overlayEl ? (overlayEl.offsetWidth - dayLabelWidth) / overlayEl.offsetWidth : 1;
-    function rtlLeftPct(endMinutes) {
-      return ((gridEndMin - endMinutes) / totalMin) * 100 * scaleFactor;
-    }
-    function widthPct(durationMinutes) {
-      return (durationMinutes / totalMin) * 100 * scaleFactor;
-    }
+    var scaleFactor = S.timetableScaleFactor(timetable.querySelector('.tt-overlay'));
 
     ghosts.forEach(function (ghost) {
       var day = ghost.slot.day;
@@ -448,8 +424,8 @@
 
       var el = document.createElement('div');
       el.className = 'tt-ghost ' + (ghost.conflict ? 'tt-ghost-conflict' : 'tt-ghost-available');
-      el.style.left = rtlLeftPct(endMin) + '%';
-      el.style.width = widthPct(dur) + '%';
+      el.style.left = S.timetableLeftPct(endMin, scaleFactor) + '%';
+      el.style.width = S.timetableWidthPct(dur, scaleFactor) + '%';
       el.dataset.section = ghost.section['کد ارائه'];
       el.dataset.course = ghost.section['کد درس'];
 
@@ -502,71 +478,8 @@
   }
 
   // ── Green hatches (rendered once in edit mode) ──────────────────
-  function renderGreenHatchesForBlock(sectionCode, day, timetable) {
-    timetable.querySelectorAll('.tt-hatch-green').forEach(function (h) { h.remove(); });
-
-    var totalMin = HOURS_COUNT * 60;
-    var gridEndMin = HOURS_END * 60;
-    var overlayEl = timetable.querySelector('.tt-overlay');
-    var dayLabelWidth = 32;
-    var scaleFactor = overlayEl ? (overlayEl.offsetWidth - dayLabelWidth) / overlayEl.offsetWidth : 1;
-    function rtlLeftPct(endMinutes) { return ((gridEndMin - endMinutes) / totalMin) * 100 * scaleFactor; }
-    function widthPct(durationMinutes) { return (durationMinutes / totalMin) * 100 * scaleFactor; }
-
-    // Find all blocks with same section code on this day
-    var dayRow = timetable.querySelector('.tt-row[data-day="' + day + '"]');
-    if (!dayRow) return;
-    var overlay = dayRow.querySelector('.tt-overlay');
-    if (!overlay) return;
-
-    var blocks = overlay.querySelectorAll('.tt-block[data-section="' + sectionCode + '"]');
-    if (blocks.length < 2) return;
-
-    // Sort by left position (RTL: larger left = earlier time)
-    var sorted = Array.from(blocks).sort(function (a, b) {
-      return parseFloat(b.style.left) - parseFloat(a.style.left);
-    });
-
-    for (var j = 0; j < sorted.length - 1; j++) {
-      var b1Left = parseFloat(sorted[j].style.left);
-      var b1Width = parseFloat(sorted[j].style.width);
-      var b2Left = parseFloat(sorted[j + 1].style.left);
-      var b2Width = parseFloat(sorted[j + 1].style.width);
-
-      // earlier = larger left, later = smaller left
-      var earlier = b1Left > b2Left ? sorted[j] : sorted[j + 1];
-      var later = b1Left > b2Left ? sorted[j + 1] : sorted[j];
-      var eLeft = parseFloat(earlier.style.left);
-      var eWidth = parseFloat(earlier.style.width);
-      var lLeft = parseFloat(later.style.left);
-
-      var gapStartMin = gridEndMin - ((eLeft + eWidth) / 100) * totalMin;
-      var gapEndMin = gridEndMin - (lLeft / 100) * totalMin;
-      var gapDur = gapEndMin - gapStartMin;
-
-      if (gapDur > 0) {
-        var hatch = document.createElement('div');
-        hatch.className = 'tt-hatch-green';
-        hatch.style.left = rtlLeftPct(gapEndMin) + '%';
-        hatch.style.width = widthPct(gapDur) + '%';
-        overlay.appendChild(hatch);
-      }
-    }
-  }
-
   function renderAllGreenHatches(ghosts, timetable) {
-    var totalMin = HOURS_COUNT * 60;
-    var gridEndMin = HOURS_END * 60;
-
-    var overlayEl = timetable.querySelector('.tt-overlay');
-    var dayLabelWidth = 32;
-    var scaleFactor = overlayEl ? (overlayEl.offsetWidth - dayLabelWidth) / overlayEl.offsetWidth : 1;
-    function rtlLeftPct(endMinutes) {
-      return ((gridEndMin - endMinutes) / totalMin) * 100 * scaleFactor;
-    }
-    function widthPct(durationMinutes) {
-      return (durationMinutes / totalMin) * 100 * scaleFactor;
-    }
+    var scaleFactor = S.timetableScaleFactor(timetable.querySelector('.tt-overlay'));
 
     // Group ghosts by day + section code
     var groups = {};
@@ -600,8 +513,8 @@
         if (gapDur > 0) {
           var hatch = document.createElement('div');
           hatch.className = 'tt-hatch-green';
-          hatch.style.left = rtlLeftPct(gapEnd) + '%';
-          hatch.style.width = widthPct(gapDur) + '%';
+          hatch.style.left = S.timetableLeftPct(gapEnd, scaleFactor) + '%';
+          hatch.style.width = S.timetableWidthPct(gapDur, scaleFactor) + '%';
           overlay.appendChild(hatch);
         }
       }
@@ -1322,7 +1235,8 @@
   // AI SCHEDULE GENERATOR
   // ══════════════════════════════════════════════════════════════
 
-  var AI_WORKER_URL = 'https://iau-schedule-worker.ashkan-ebi2.workers.dev';
+  var AI_WORKER_URL_META = document.querySelector('meta[name="ai-worker-url"]');
+  var AI_WORKER_URL = AI_WORKER_URL_META ? AI_WORKER_URL_META.content : '';
 
   var desiredCourses = []; // Array of course codes the user wants for AI
   var aiResults = [];     // Schedules returned by Gemini
@@ -1631,13 +1545,7 @@
           var color = TIMETABLE_COLORS[colorIdx % TIMETABLE_COLORS.length];
           colorIdx++;
 
-          var totalMin = HOURS_COUNT * 60;
-          var gridEndMin = HOURS_END * 60;
-
-          // Scale factor accounts for the 32px day label column in the overlay
-          var previewOverlayEl = previewEl.querySelector('.tt-overlay');
-          var dayLabelWidth = 32;
-          var scaleFactor = previewOverlayEl ? (previewOverlayEl.offsetWidth - dayLabelWidth) / previewOverlayEl.offsetWidth : 1;
+          var scaleFactor = S.timetableScaleFactor(previewEl.querySelector('.tt-overlay'));
 
           // Group by day for hatch rendering
           var slotsByDay = {};
@@ -1663,8 +1571,8 @@
 
               var block = document.createElement('div');
               block.className = 'tt-block';
-              block.style.left = ((gridEndMin - endMin) / totalMin * 100 * scaleFactor) + '%';
-              block.style.width = (dur / totalMin * 100 * scaleFactor) + '%';
+              block.style.left = S.timetableLeftPct(endMin, scaleFactor) + '%';
+              block.style.width = S.timetableWidthPct(dur, scaleFactor) + '%';
               block.style.background = color.bg;
               block.style.borderColor = color.border;
               block.style.color = color.text;
@@ -1688,8 +1596,8 @@
               if (gapDur > 0) {
                 var hatch = document.createElement('div');
                 hatch.className = 'tt-hatch';
-                hatch.style.left = ((gridEndMin - gapEnd) / totalMin * 100 * scaleFactor) + '%';
-                hatch.style.width = (gapDur / totalMin * 100 * scaleFactor) + '%';
+                hatch.style.left = S.timetableLeftPct(gapEnd, scaleFactor) + '%';
+                hatch.style.width = S.timetableWidthPct(gapDur, scaleFactor) + '%';
                 overlay.appendChild(hatch);
               }
             }

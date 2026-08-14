@@ -37,6 +37,17 @@
     }, 1000);
   }
 
+  // ── Helpers ────────────────────────────────────────────────────
+  function colLetter(n) {
+    let s = '';
+    while (n > 0) {
+      n--;
+      s = String.fromCharCode(65 + (n % 26)) + s;
+      n = Math.floor(n / 26);
+    }
+    return s;
+  }
+
   // ── Export: XLSX (ExcelJS) ─────────────────────────────────────
   async function exportXlsx() {
     if (!S.filteredCourses.length) return;
@@ -88,7 +99,7 @@
     });
 
     ws.views = [{ rightToLeft: true, state: 'frozen', ySplit: 1 }];
-    ws.autoFilter = { from: 'A1', to: `${String.fromCharCode(64 + S.tableColumns.length)}1` };
+    ws.autoFilter = { from: 'A1', to: colLetter(S.tableColumns.length) + '1' };
 
     const buffer = await wb.xlsx.writeBuffer();
     const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });

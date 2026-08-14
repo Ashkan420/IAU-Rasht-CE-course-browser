@@ -544,6 +544,26 @@
     return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
   }
 
+  // ── Timetable positioning ─────────────────────────────────────
+  var TT_HOURS_START = 7;
+  var TT_HOURS_END = 22;
+  var TT_TOTAL_MIN = (TT_HOURS_END - TT_HOURS_START) * 60; // 900
+  var TT_GRID_END_MIN = TT_HOURS_END * 60;                 // 1320
+  var TT_DAY_LABEL_WIDTH = 32;
+
+  function timetableScaleFactor(overlayEl) {
+    if (!overlayEl) return 1;
+    return (overlayEl.offsetWidth - TT_DAY_LABEL_WIDTH) / overlayEl.offsetWidth;
+  }
+
+  function timetableLeftPct(endMinutes, scaleFactor) {
+    return ((TT_GRID_END_MIN - endMinutes) / TT_TOTAL_MIN) * 100 * scaleFactor;
+  }
+
+  function timetableWidthPct(durationMinutes, scaleFactor) {
+    return (durationMinutes / TT_TOTAL_MIN) * 100 * scaleFactor;
+  }
+
   // ── Callback hooks (set by mode-specific JS) ──────────────────
   var _coursesLoadedCallbacks = [];
   var _modeChangeCallbacks = [];
@@ -620,6 +640,15 @@
     timeToMinutes,
     minutesToTime,
     normalizeDay,
+
+    // Timetable positioning
+    TT_HOURS_START,
+    TT_HOURS_END,
+    TT_TOTAL_MIN,
+    TT_GRID_END_MIN,
+    timetableScaleFactor,
+    timetableLeftPct,
+    timetableWidthPct,
 
     // Callbacks
     get onCoursesLoaded() { return _coursesLoadedCallbacks; },
